@@ -99,8 +99,6 @@ bazel test --test_sharding_strategy=disabled --config=rocm --test_tag_filters=-n
     -//tensorflow/python:virtual_gpu_test \
     -//tensorflow/python:function_def_to_graph_test \
     -//tensorflow/python:momentum_test \
-    -//tensorflow/python/keras:models_test \
-    -//tensorflow/python/keras:training_test \
     -//tensorflow/python/keras:cudnn_recurrent_test \
     -//tensorflow/python/kernel_tests/distributions:beta_test \
     -//tensorflow/python/kernel_tests/distributions:dirichlet_test \
@@ -110,4 +108,4 @@ bazel test --test_sharding_strategy=disabled --config=rocm --test_tag_filters=-n
     -//tensorflow/python/estimator:estimator_test \
     -//tensorflow/python/estimator:linear_test
 
-# Note: temp. disabling 87 unit tests in order to esablish a CI baseline (2018/06/13)
+# Note: temp. disabling 75 unit tests in order to esablish a CI baseline (2018/06/13)
