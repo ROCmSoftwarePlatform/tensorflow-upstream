@@ -534,20 +534,32 @@ bool ROCMFft::DoFftWithDirectionInternal(Stream *stream, fft::Plan *plan,
   bool ROCMFft::DoFft(Stream *stream, fft::Plan *plan,                       \
                       const DeviceMemory<std::complex<__type>> &input,       \
                       DeviceMemory<std::complex<__type>> *output) {          \
-    return DoFftWithDirectionInternal(                                       \
-         stream, plan, wrap::hipfftExec##__fft_type1, input, output);        \
+    LOG(ERROR) << "rocFFT does not current support complex<float> "          \
+	       << "/ complex<double> datatypes" ;                            \
+    /* XXX disable for now until rocFFT properly honors HIP complex types */ \
+    /* return DoFftWithDirectionInternal(                                 */ \
+    /*     stream, plan, wrap::hipfftExec##__fft_type1, input, output);   */ \
+    return false;                                                            \
   }                                                                          \
   bool ROCMFft::DoFft(Stream *stream, fft::Plan *plan,                       \
                       const DeviceMemory<__type> &input,                     \
                       DeviceMemory<std::complex<__type>> *output) {          \
-    return DoFftInternal(stream, plan, wrap::hipfftExec##__fft_type2, input, \
-                         output);                                            \
+    LOG(ERROR) << "rocFFT does not current support complex<float> "          \
+	       << "/ complex<double> datatypes" ;                            \
+    /* XXX disable for now until rocFFT properly honors HIP complex types */ \
+    /* return DoFftInternal(stream, plan, wrap::hipfftExec##__fft_type2, input, */  \
+    /*                     output);                                       */ \
+    return false;                                                            \
   }                                                                          \
   bool ROCMFft::DoFft(Stream *stream, fft::Plan *plan,                       \
                       const DeviceMemory<std::complex<__type>> &input,       \
                       DeviceMemory<__type> *output) {                        \
-    return DoFftInternal(stream, plan, wrap::hipfftExec##__fft_type3, input, \
-                         output);                                            \
+    LOG(ERROR) << "rocFFT does not current support complex<float> "          \
+	       << "/ complex<double> datatypes" ;                            \
+    /* XXX disable for now until rocFFT properly honors HIP complex types */ \
+    /* return DoFftInternal(stream, plan, wrap::hipfftExec##__fft_type3, input, */ \
+    /*                     output);                                       */ \
+    return false;                                                            \
   }
 
 PERFTOOLS_GPUTOOLS_ROCM_DEFINE_FFT(float, C2C, R2C, C2R)
