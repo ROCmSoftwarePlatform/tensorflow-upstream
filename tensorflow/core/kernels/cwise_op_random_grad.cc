@@ -1,4 +1,4 @@
-/* Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+/* Copyright 2018 The TensorFlow Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
-
-#include "tensorflow/core/kernels/cwise_ops_gpu_common.cu.h"
+#include "tensorflow/core/kernels/cwise_ops_common.h"
 
 namespace tensorflow {
-namespace functor {
-DEFINE_BINARY2(igamma, float, double);
-DEFINE_BINARY2(igamma_grad_a, float, double);
-DEFINE_BINARY2(igammac, float, double);
-}  // namespace functor
+REGISTER2(BinaryOp, CPU, "RandomGammaGrad", functor::random_gamma_grad, float,
+          double);
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+REGISTER2(BinaryOp, GPU, "RandomGammaGrad", functor::random_gamma_grad, float,
+          double);
+#endif
 }  // namespace tensorflow
-
-#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
