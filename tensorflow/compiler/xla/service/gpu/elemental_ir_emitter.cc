@@ -155,7 +155,7 @@ StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitMathCall(
   return EmitDeviceFunctionCall(
       callee_name, operands, input_types, output_type,
       {llvm::Attribute::ReadNone, llvm::Attribute::NoUnwind},
-      b_, module_);
+      ir_builder_, module_);
 }
 
 StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitFloatBinaryOp(
