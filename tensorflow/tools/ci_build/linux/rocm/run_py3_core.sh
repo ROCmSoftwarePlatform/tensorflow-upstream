@@ -40,11 +40,13 @@ bazel test --test_sharding_strategy=disabled --config=rocm --test_tag_filters=-n
     --build_tests_only --test_output=errors --local_test_jobs=${TF_GPU_COUNT} --config=opt \
     --run_under=//tensorflow/tools/ci_build/gpu_build:parallel_gpu_execute -- \
     //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/... \
-    -//tensorflow/python/keras:sequential_test \
-    -//tensorflow/python/keras:simplernn_test \
-    -//tensorflow/python/keras:training_eager_test \
-    -//tensorflow/python/keras:training_test \
-    -//tensorflow/python/keras:wrappers_test \
+    -//tensorflow/python:optimizer_test \
+    -//tensorflow/python/estimator:boosted_trees_test   \
+    -//tensorflow/python/estimator:dnn_linear_combined_test   \
+    -//tensorflow/python/feature_column:feature_column_test \
+    -//tensorflow/python/keras:activations_test \
+    -//tensorflow/python/keras:normalization_test \
+    -//tensorflow/python/keras:pooling_test \
     -//tensorflow/python/kernel_tests:atrous_conv2d_test \
     -//tensorflow/python/kernel_tests:bincount_op_test \
     -//tensorflow/python/kernel_tests:concat_op_test \
@@ -68,6 +70,7 @@ bazel test --test_sharding_strategy=disabled --config=rocm --test_tag_filters=-n
     -//tensorflow/python/kernel_tests:pool_test \
     -//tensorflow/python/kernel_tests:pooling_ops_3d_test \
     -//tensorflow/python/kernel_tests:pooling_ops_test \
+    -//tensorflow/python/ops/parallel_for:control_flow_ops_test \
     -//tensorflow/python/profiler/internal:run_metadata_test \
     -//tensorflow/python/profiler:profile_context_test \
     -//tensorflow/python/profiler:profiler_test \
