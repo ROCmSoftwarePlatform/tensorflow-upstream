@@ -493,7 +493,7 @@ void GdrMemoryManager::TransportOptionsFromTensor(
 
   uint64_t checksum = 0;
   if (VLOG_IS_ON(2)) {
-#ifdef GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
     if (!on_host) {
       checksum = GPUUtil::Checksum(device, device_context, tensor);
     } else {
@@ -630,7 +630,7 @@ void GdrMemoryManager::TensorFromTransportOptions(
 
   uint64_t checksum = 0;
   if (VLOG_IS_ON(2)) {
-#ifdef GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
     if (device->tensorflow_gpu_device_info() && (!on_host)) {
       checksum = GPUUtil::Checksum(device, device_context, *tensor);
     } else {
