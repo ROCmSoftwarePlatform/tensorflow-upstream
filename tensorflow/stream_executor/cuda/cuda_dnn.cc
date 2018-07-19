@@ -2093,10 +2093,276 @@ inline cudnnConvolutionFwdAlgo_t GetCudnnConvolutionForwardAlgo(
   cudnnConvolutionFwdAlgo_t algo_to_use;
   auto status = cudnnGetConvolutionForwardAlgorithm(
       cudnn.handle(), input_nd.handle(), filter.handle(), conv.handle(),
-      output_nd.handle(), preference, memory_limit_bytes, &algo_to_use);
-  CHECK_EQ(status, CUDNN_STATUS_SUCCESS)
-      << "Unable to find a suitable algorithm for doing forward convolution";
+      output_nd.handle(), preference, memory_limit_bytes, &algo_to_use));
   return algo_to_use;
+}
+
+port::StatusOr<cudnnConvolutionBwdDataAlgo_t>
+GetCudnnConvolutionBackwardDataAlgo(const CudnnHandle& cudnn,
+                                    const CudnnTensorDescriptor& input_nd,
+                                    const CudnnFilterDescriptor& filter,
+                                    const CudnnConvolutionDescriptor& conv,
+                                    const CudnnTensorDescriptor& output_nd,
+                                    bool specify_workspace_limit,
+                                    size_t memory_limit_bytes) {
+  cudnnConvolutionBwdDataPreference_t preference =
+      specify_workspace_limit
+          ? CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT
+          : CUDNN_CONVOLUTION_BWD_DATA_NO_WORKSPACE;
+  cudnnConvolutionBwdDataAlgo_t algo_to_use;
+  RETURN_IF_CUDNN_ERROR(cudnnGetConvolutionBackwardDataAlgorithm(
+      cudnn.handle(), filter.handle(), output_nd.handle(), conv.handle(),
+      input_nd.handle(), preference, memory_limit_bytes, &algo_to_use));
+  return algo_to_use;
+}
+
+port::StatusOr<cudnnConvolutionBwdFilterAlgo_t>
+GetCudnnConvolutionBackwardFilterAlgo(const CudnnHandle& cudnn,
+                                      const CudnnTensorDescriptor& input_nd,
+                                      const CudnnFilterDescriptor& filter,
+                                      const CudnnConvolutionDescriptor& conv,
+                                      const CudnnTensorDescriptor& output_nd,
+                                      bool specify_workspace_limit,
+                                      size_t memory_limit_bytes) {
+  cudnnConvolutionBwdFilterPreference_t preference =
+      specify_workspace_limit
+          ? CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT
+          : CUDNN_CONVOLUTION_BWD_FILTER_NO_WORKSPACE;
+  cudnnConvolutionBwdFilterAlgo_t algo_to_use;
+  RETURN_IF_CUDNN_ERROR(cudnnGetConvolutionBackwardFilterAlgorithm(
+      cudnn.handle(), input_nd.handle(), output_nd.handle(), conv.handle(),
+      filter.handle(), preference, memory_limit_bytes, &algo_to_use));
+  return algo_to_use;
+}
+
+port::StatusOr<DeviceMemory<uint8>> AllocateCudnnConvolutionForwardWorkspace(
+    Stream* stream, const CudnnHandle& cudnn,
+    dnn::AlgorithmDesc& algorithm_desc,
+    const CudnnTensorDescriptor& input_nd, const CudnnFilterDescriptor& filter,
+    const CudnnConvolutionDescriptor& conv,
+    const CudnnTensorDescriptor& output_nd,
+    ScratchAllocator* scratch_allocator) {
+  // TODO(csigg): This has side effects on the convolution descriptor. It is
+  // functionally correct because the convolution is run with the algorithm of
+  // the last call to this function, but should be fixed anyway.
+  conv.set_use_tensor_op_math(algorithm_desc.tensor_ops_enabled());
+
+  // Query the size of the workspace and allocate it.
+  size_t size_in_bytes;
+  RETURN_IF_CUDNN_ERROR(cudnnGetConvolutionForwardWorkspaceSize(
+      cudnn.handle(),
+      /*xDesc=*/input_nd.handle(),
+      /*wDesc=*/filter.handle(), /*convDesc=*/conv.handle(),
+      /*yDesc=*/output_nd.handle(), /*algo=*/ToConvForwardAlgo(algorithm_desc),
+      /*sizeInBytes=*/&size_in_bytes));
+  algorithm_desc.set_scratch_size(size_in_bytes);
+  int64 size_in_bytes_int64 = size_in_bytes;
+
+  if (TF_PREDICT_FALSE(size_in_bytes_int64 < 0)) {
+    return port::Status(
+        port::error::INTERNAL,
+        "cudnnGetConvolutionForwardWorkspaceSize() returned "
+        "negative sizeInBytes value. This could be a cudnn bug.");
+  }
+
+  if (size_in_bytes_int64 == 0) {
+    return DeviceMemory<uint8>();
+  }
+
+  if (TF_PREDICT_FALSE(!scratch_allocator)) {
+    return port::Status(port::error::INVALID_ARGUMENT,
+                        "No scratch allocator provided");
+  }
+
+  return scratch_allocator->AllocateBytes(stream, size_in_bytes);
+}
+
+port::StatusOr<DeviceMemory<uint8>>
+AllocateCudnnConvolutionBackwardDataWorkspace(
+    Stream* stream, const CudnnHandle& cudnn,
+    const dnn::AlgorithmDesc& algorithm_desc,
+    const CudnnTensorDescriptor& input_nd, const CudnnFilterDescriptor& filter,
+    const CudnnConvolutionDescriptor& conv,
+    const CudnnTensorDescriptor& output_nd,
+    ScratchAllocator* scratch_allocator) {
+  // TODO(csigg): This has side effects on the convolution descriptor. It is
+  // functionally correct because the convolution is run with the algorithm of
+  // the last call to this function, but should be fixed anyway.
+  conv.set_use_tensor_op_math(algorithm_desc.tensor_ops_enabled());
+
+  // Query the size of the workspace and allocate it.
+  size_t size_in_bytes;
+  RETURN_IF_CUDNN_ERROR(cudnnGetConvolutionBackwardDataWorkspaceSize(
+      cudnn.handle(),
+      /*wDesc=*/filter.handle(),
+      /*dyDesc=*/output_nd.handle(),
+      /*convDesc=*/conv.handle(),
+      /*dxDesc=*/input_nd.handle(),
+      /*algo=*/ToConvBackwardDataAlgo(algorithm_desc),
+      /*sizeInBytes=*/&size_in_bytes));
+  algorithm_desc.set_scratch_size(size_in_bytes);
+  int64 size_in_bytes_int64 = size_in_bytes;
+
+  if (TF_PREDICT_FALSE(size_in_bytes_int64 < 0)) {
+    return port::Status(
+        port::error::INTERNAL,
+        "cudnnGetConvolutionBackwardDataWorkspaceSize() returned "
+        "negative sizeInBytes value. This could be a cudnn bug.");
+  }
+
+  if (size_in_bytes_int64 == 0) {
+    return DeviceMemory<uint8>();
+  }
+
+  if (TF_PREDICT_FALSE(!scratch_allocator)) {
+    return port::Status(port::error::INVALID_ARGUMENT,
+                        "No scratch allocator provided");
+  }
+
+  return scratch_allocator->AllocateBytes(stream, size_in_bytes);
+}
+
+port::StatusOr<DeviceMemory<uint8>>
+AllocateCudnnConvolutionBackwardFilterWorkspace(
+    Stream* stream, const CudnnHandle& cudnn,
+    dnn::AlgorithmDesc& algorithm_desc,
+    const CudnnTensorDescriptor& input_nd, const CudnnFilterDescriptor& filter,
+    const CudnnConvolutionDescriptor& conv,
+    const CudnnTensorDescriptor& output_nd,
+    ScratchAllocator* scratch_allocator) {
+  // TODO(csigg): This has side effects on the convolution descriptor. It is
+  // functionally correct because the convolution is run with the algorithm of
+  // the last call to this function, but should be fixed anyway.
+  conv.set_use_tensor_op_math(algorithm_desc.tensor_ops_enabled());
+
+  // Query the size of the workspace and allocate it.
+  size_t size_in_bytes;
+  RETURN_IF_CUDNN_ERROR(cudnnGetConvolutionBackwardFilterWorkspaceSize(
+      cudnn.handle(),
+      /*xDesc=*/input_nd.handle(),
+      /*dyDesc=*/output_nd.handle(),
+      /*convDesc=*/conv.handle(),
+      /*gradDesc=*/filter.handle(),
+      /*algo=*/ToConvBackwardFilterAlgo(algorithm_desc),
+      /*sizeInBytes=*/&size_in_bytes));
+  algorithm_desc.set_scratch_size(size_in_bytes);
+  int64 size_in_bytes_int64 = size_in_bytes;
+
+  if (TF_PREDICT_FALSE(size_in_bytes_int64 < 0)) {
+    return port::Status(
+        port::error::INTERNAL,
+        "cudnnGetConvolutionBackwardFilterWorkspaceSize() returned "
+        "negative sizeInBytes value. This could be a cudnn bug.");
+  }
+
+  if (size_in_bytes_int64 == 0) {
+    return DeviceMemory<uint8>();
+  }
+
+  if (TF_PREDICT_FALSE(!scratch_allocator)) {
+    return port::Status(port::error::INVALID_ARGUMENT,
+                        "No scratch allocator provided");
+  }
+
+  return scratch_allocator->AllocateBytes(stream, size_in_bytes);
+}
+
+port::StatusOr<dnn::AlgorithmDesc> GetCudnnConvolutionForwardAlgorithm(
+    Stream* stream, const CudnnHandle& cudnn,
+    const dnn::AlgorithmConfig& algorithm_config,
+    const CudnnTensorDescriptor& input_nd, const CudnnFilterDescriptor& filter,
+    const CudnnConvolutionDescriptor& conv,
+    const CudnnTensorDescriptor& output_nd, ScratchAllocator* scratch_allocator,
+    DeviceMemory<uint8>* scratch) {
+  dnn::AlgorithmDesc algo_desc = algorithm_config.algorithm();
+  if (algorithm_config.algorithm().is_default()) {
+    // Pick fastest algorithm within memory limit according to cuDNN's
+    // heuristics.
+    bool specify_workspace_limit = scratch_allocator != nullptr;
+    auto memory_limit_bytes =
+        specify_workspace_limit
+            ? std::max(scratch_allocator->GetMemoryLimitInBytes(stream), 0ll)
+            : 0ll;
+    SE_ASSIGN_OR_RETURN(cudnnConvolutionFwdAlgo_t algo,
+                        GetCudnnConvolutionForwardAlgo(
+                            cudnn, input_nd, filter, conv, output_nd,
+                            specify_workspace_limit, memory_limit_bytes));
+    algo_desc = dnn::AlgorithmDesc(
+        algo, algorithm_config.algorithm().tensor_ops_enabled());
+  }
+
+  auto scratch_or = AllocateCudnnConvolutionForwardWorkspace(
+      stream, cudnn, algo_desc, input_nd, filter, conv, output_nd,
+      scratch_allocator);
+
+  if (scratch_or.ok()) {
+    *scratch = scratch_or.ValueOrDie();
+    return algo_desc;
+  }
+
+  // Failed to allocate workspace for the first algorithm, fall back to the
+  // no_scratch algorithm.
+  if (algorithm_config.algorithm_no_scratch().is_default()) {
+    return port::Status(
+        port::error::INVALID_ARGUMENT,
+        "The primary convolution algorithm failed memory allocation, "
+        "while a secondary algorithm is not provided.");
+  }
+
+  SE_ASSIGN_OR_RETURN(
+      *scratch, AllocateCudnnConvolutionForwardWorkspace(
+                    stream, cudnn, algorithm_config.algorithm_no_scratch(),
+                    input_nd, filter, conv, output_nd, scratch_allocator));
+  return algorithm_config.algorithm_no_scratch();
+}
+
+port::StatusOr<dnn::AlgorithmDesc> GetCudnnConvolutionBackwardDataAlgorithm(
+    Stream* stream, const CudnnHandle& cudnn,
+    const dnn::AlgorithmConfig& algorithm_config,
+    const CudnnTensorDescriptor& input_nd, const CudnnFilterDescriptor& filter,
+    const CudnnConvolutionDescriptor& conv,
+    const CudnnTensorDescriptor& output_nd, ScratchAllocator* scratch_allocator,
+    DeviceMemory<uint8>* scratch) {
+  dnn::AlgorithmDesc algo_desc = algorithm_config.algorithm();
+  if (algorithm_config.algorithm().is_default()) {
+    // Pick fastest algorithm within memory limit according to cuDNN's
+    // heuristics.
+    bool specify_workspace_limit = scratch_allocator != nullptr;
+    auto memory_limit_bytes =
+        specify_workspace_limit
+            ? std::max(scratch_allocator->GetMemoryLimitInBytes(stream), 0ll)
+            : 0ll;
+    SE_ASSIGN_OR_RETURN(cudnnConvolutionBwdDataAlgo_t algo,
+                        GetCudnnConvolutionBackwardDataAlgo(
+                            cudnn, input_nd, filter, conv, output_nd,
+                            specify_workspace_limit, memory_limit_bytes));
+    algo_desc = dnn::AlgorithmDesc(
+        algo, algorithm_config.algorithm().tensor_ops_enabled());
+  }
+
+  auto scratch_or = AllocateCudnnConvolutionBackwardDataWorkspace(
+      stream, cudnn, algo_desc, input_nd, filter, conv, output_nd,
+      scratch_allocator);
+
+  if (scratch_or.ok()) {
+    *scratch = scratch_or.ValueOrDie();
+    return algo_desc;
+  }
+
+  // Failed to allocate workspace for the first algorithm, fall back to the
+  // no_scratch algorithm.
+  if (algorithm_config.algorithm_no_scratch().is_default()) {
+    return port::Status(
+        port::error::INVALID_ARGUMENT,
+        "The primary convolution algorithm failed memory allocation, "
+        "while a secondary algorithm is not provided.");
+  }
+
+  SE_ASSIGN_OR_RETURN(
+      *scratch, AllocateCudnnConvolutionBackwardDataWorkspace(
+                    stream, cudnn, algorithm_config.algorithm_no_scratch(),
+                    input_nd, filter, conv, output_nd, scratch_allocator));
+  return algorithm_config.algorithm_no_scratch();
 }
 
 dnn::AlgorithmDesc GetCudnnConvolutionForwardAlgorithm(
