@@ -54,35 +54,32 @@ class TfToPlatformGpuIdMap {
     return Status::OK();
   }
 
-  bool Find(TfGpuId tf_gpu_id, PlatformGpuId* platform_gpu_id) const
-      LOCKS_EXCLUDED(mu_) {
-    mutex_lock lock(mu_);
-    auto result = id_map_.find(tf_gpu_id.value());
-    if (result == id_map_.end()) return false;
-    *platform_gpu_id = result->second;
-    return true;
-  }
+TEST(GpuIdManagerTest, Basics) {
+  TfGpuId key_0(0);
+  PlatformGpuId value_0(0);
+  TF_ASSERT_OK(GpuIdManager::InsertTfPlatformGpuIdPair(key_0, value_0));
+  EXPECT_EQ(value_0, TfToPlatformGpuId(key_0));
 
- private:
-  TfToPlatformGpuIdMap() = default;
+  // Multiple calls to map the same value is ok.
+  TF_ASSERT_OK(GpuIdManager::InsertTfPlatformGpuIdPair(key_0, value_0));
+  EXPECT_EQ(value_0, TfToPlatformGpuId(key_0));
 
-  void TestOnlyReset() LOCKS_EXCLUDED(mu_) {
-    mutex_lock lock(mu_);
-    id_map_.clear();
-  }
+  // Map a different TfGpuId to a different value.
+  TfGpuId key_1(3);
+  PlatformGpuId value_1(2);
+  TF_ASSERT_OK(GpuIdManager::InsertTfPlatformGpuIdPair(key_1, value_1));
+  EXPECT_EQ(value_1, TfToPlatformGpuId(key_1));
 
-  using IdMapType = std::unordered_map<int32, int32>;
-  mutable mutex mu_;
-  IdMapType id_map_ GUARDED_BY(mu_);
+  // Mapping a different TfGpuId to the same value is ok.
+  TfGpuId key_2(10);
+  TF_ASSERT_OK(GpuIdManager::InsertTfPlatformGpuIdPair(key_2, value_1));
+  EXPECT_EQ(value_1, TfToPlatformGpuId(key_2));
 
-  friend class ::tensorflow::GpuIdManager;
-  TF_DISALLOW_COPY_AND_ASSIGN(TfToPlatformGpuIdMap);
-};
-}  // namespace
+  // Mapping the same TfGpuId to a different value.
+  ASSERT_FALSE(GpuIdManager::InsertTfPlatformGpuIdPair(key_2, value_0).ok());
 
-Status GpuIdManager::InsertTfPlatformGpuIdPair(TfGpuId tf_gpu_id,
-                                               PlatformGpuId platform_gpu_id) {
-  return TfToPlatformGpuIdMap::singleton()->Insert(tf_gpu_id, platform_gpu_id);
+  // Getting a nonexistent mapping.
+  ASSERT_FALSE(GpuIdManager::TfToPlatformGpuId(TfGpuId(100), &value_0).ok());
 }
 
 Status GpuIdManager::TfToPlatformGpuId(TfGpuId tf_gpu_id,
