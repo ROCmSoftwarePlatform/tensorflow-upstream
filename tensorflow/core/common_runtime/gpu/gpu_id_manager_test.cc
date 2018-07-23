@@ -31,28 +31,11 @@ class TfToPlatformGpuIdMap {
     return id_map;
   }
 
-  Status Insert(TfGpuId tf_gpu_id, PlatformGpuId platform_gpu_id)
-      LOCKS_EXCLUDED(mu_) {
-    std::pair<IdMapType::iterator, bool> result;
-    {
-      mutex_lock lock(mu_);
-      result = id_map_.insert({tf_gpu_id.value(), platform_gpu_id.value()});
-    }
-    if (!result.second && platform_gpu_id.value() != result.first->second) {
-      return errors::AlreadyExists(
-          "TensorFlow device (GPU:", tf_gpu_id.value(),
-          ") is being mapped to "
-          "multiple CUDA devices (",
-          platform_gpu_id.value(), " now, and ", result.first->second,
-          " previously), which is not supported. "
-          "This may be the result of providing different GPU configurations "
-          "(ConfigProto.gpu_options, for example different visible_device_list)"
-          " when creating multiple Sessions in the same process. This is not "
-          " currently supported, see "
-          "https://github.com/tensorflow/tensorflow/issues/19083");
-    }
-    return Status::OK();
-  }
+PhysicalGpuId TfToPlatformGpuId(TfGpuId tf) {
+  PlatformGpuId platform_gpu_id;
+  TF_CHECK_OK(GpuIdManager::TfToPlatformGpuId(tf, &platform_gpu_id));
+  return platform_gpu_id;
+}
 
 TEST(GpuIdManagerTest, Basics) {
   TfGpuId key_0(0);
