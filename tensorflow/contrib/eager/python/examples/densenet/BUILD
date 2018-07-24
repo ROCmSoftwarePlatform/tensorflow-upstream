@@ -27,3 +27,21 @@ gpu_py_test(
         "optonly",
     ],
 )
+
+gpu_py_test(
+    name = "densenet_graph_test",
+    size = "large",
+    srcs = ["densenet_graph_test.py"],
+    additional_deps = [
+        ":densenet",
+        "//third_party/py/numpy",
+        "//tensorflow:tensorflow_py",
+    ],
+    tags = [
+        "no_pip",
+        "noasan",
+        "nomsan",
+        "notsan",
+        "optonly",
+    ],
+)
