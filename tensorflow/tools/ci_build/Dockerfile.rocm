@@ -26,9 +26,8 @@ RUN cd $HOME/hcc  && git checkout -b issue812-fix d530be7
 RUN cd $HOME/hcc && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && sudo make package -j$(nproc) && sudo dpkg -i *.deb
 
 # Workaround: build HIP from source using fork that holds roc-1.8.x with merged PR457
-RUN cd $HOME && git clone -b roc-1.8.x-pr457 https://github.com/parallelo/HIP.git
+RUN cd $HOME && git clone -b roc-1.8.x-pr457-altfix https://github.com/deven-amd/HIP.git
 RUN cd $HOME/HIP && mkdir build && cd build && cmake .. && sudo make package -j$(nproc) && sudo dpkg -i *.deb
-
 
 ###########################
 # Stage 2 : do the TF build
