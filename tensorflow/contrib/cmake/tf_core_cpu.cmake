@@ -75,7 +75,8 @@ if (tensorflow_ENABLE_GPU)
   file(GLOB_RECURSE tf_core_gpu_srcs
     "${tensorflow_source_dir}/tensorflow/core/common_runtime/gpu/*.cc"
     "${tensorflow_source_dir}/tensorflow/core/platform/default/gpu/cupti_wrapper.cc"
-    "${tensorflow_source_dir}/tensorflow/core/platform/default/device_tracer.cc"
+    "${tensorflow_source_dir}/tensorflow/core/platform/default/device_tracer_cuda.cc"
+    "${tensorflow_source_dir}/tensorflow/core/platform/default/device_tracer_rocm.cc"
     "${tensorflow_source_dir}/tensorflow/core/common_runtime/gpu_device_factory.cc"
     "${tensorflow_source_dir}/tensorflow/core/grappler/devices.h"
     "${tensorflow_source_dir}/tensorflow/core/grappler/devices.cc"

@@ -210,7 +210,8 @@ if (NOT tensorflow_ENABLE_GPU)
   list(REMOVE_ITEM tf_core_platform_srcs ${tf_core_platform_gpu_srcs})
 else()
   file(GLOB tf_core_platform_srcs_exclude
-      "${tensorflow_source_dir}/tensorflow/core/platform/default/device_tracer.cc")
+      "${tensorflow_source_dir}/tensorflow/core/platform/default/device_tracer_cuda.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/default/device_tracer_rocm.cc")
   list(REMOVE_ITEM tf_core_platform_srcs ${tf_core_platform_srcs_exclude})
 endif()
 
