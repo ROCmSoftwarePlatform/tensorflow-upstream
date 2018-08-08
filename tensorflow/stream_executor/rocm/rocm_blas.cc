@@ -189,6 +189,7 @@ namespace wrap {
   __macro(rocblas_zhpr2)                    */ \
   __macro(rocblas_sgemm)                    \
   __macro(rocblas_dgemm)                    \
+  __macro(rocblas_hgemm)                    \
 /*  __macro(rocblas_cgemm)                    \
   __macro(rocblas_zgemm)                    \
   __macro(rocblas_ssyrk)                    \
@@ -1438,8 +1439,38 @@ bool ROCMBlas::DoBlasGemm(
     float alpha, const DeviceMemory<Eigen::half> &a, int lda,
     const DeviceMemory<Eigen::half> &b, int ldb, float beta,
     DeviceMemory<Eigen::half> *c, int ldc) {
-  LOG(ERROR) << "fp16 sgemm is not implemented in this rocBLAS version";
-  return false;
+  VLOG(1) << port::Printf(
+      "doing rocBLAS SGEMM: at=%d bt=%d m=%llu n=%llu "
+      "k=%llu alpha=%f a=%p lda=%d b=%p ldb=%d beta=%f "
+      "c=%p ldc=%d",
+      static_cast<int>(transa), static_cast<int>(transb), m, n, k, alpha,
+      a.opaque(), lda, b.opaque(), ldb, beta, c->opaque(), ldc);
+  if (transa == blas::Transpose::kNoTranspose) {
+    if (lda < static_cast<int64>(m)) {
+      LOG(WARNING) << "GEMM lda was smaller than m (no transpose case); "
+                      "precondition violation";
+    }
+  } else {
+    if (lda < static_cast<int64>(k)) {
+      LOG(WARNING) << "GEMM lda (" << lda << ") was smaller than k (" << k
+                   << ") (transpose case); precondition violation";
+    }
+  }
+  if (transb == blas::Transpose::kNoTranspose) {
+    if (ldb < static_cast<int64>(k)) {
+      LOG(WARNING) << "GEMM ldb (" << ldb << ") was smaller than k (" << k
+                   << ") (no transpose case); precondition violation";
+    }
+  } else {
+    if (ldb < static_cast<int64>(n)) {
+      LOG(WARNING) << "GEMM ldb was smaller than n (transpose case); "
+                      "precondition violation";
+    }
+  }
+  return DoBlasInternal(
+      wrap::rocblas_hgemm, stream, true /* = pointer_mode_host */,
+      ROCMBlasTranspose(transa), ROCMBlasTranspose(transb), m, n, k, &alpha,
+      ROCMMemory(a), lda, ROCMMemory(b), ldb, &beta, ROCMMemoryMutable(c), ldc);
 }
 
 bool ROCMBlas::DoBlasGemm(Stream *stream, blas::Transpose transa,
