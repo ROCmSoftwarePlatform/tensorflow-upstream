@@ -75,8 +75,13 @@ bazel test --test_sharding_strategy=disabled --config=rocm --test_tag_filters=-n
     -//tensorflow/python/ops/parallel_for:gradients_test \
     -//tensorflow/python/profiler:profiler_test \
     -//tensorflow/python:cost_analyzer_test \
+    -//tensorflow/python:function_test \
+    -//tensorflow/python:gradient_checker_test \
+    -//tensorflow/python:gradients_test \
+    -//tensorflow/python:histogram_ops_test \
     -//tensorflow/python:image_ops_test \
     -//tensorflow/python:layout_optimizer_test \
+    -//tensorflow/python:learning_rate_decay_test \
     -//tensorflow/python:memory_optimizer_test \
     -//tensorflow/python:timeline_test
 
