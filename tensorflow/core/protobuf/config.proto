@@ -450,6 +450,8 @@ message RunOptions {
 
   Experimental experimental = 8;
 
+  bool print_this_run = 9;
+
   reserved 4;
 }
 

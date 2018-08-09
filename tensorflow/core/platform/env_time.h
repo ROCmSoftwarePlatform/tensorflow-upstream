@@ -18,6 +18,9 @@ limitations under the License.
 #include <stdint.h>
 
 #include "tensorflow/core/platform/types.h"
+#include <thread>
+#include <sstream>
+#include <iostream>
 
 namespace tensorflow {
 
@@ -39,6 +42,26 @@ class EnvTime {
 
   /// \brief Returns the number of seconds since the Unix epoch.
   virtual uint64 NowSeconds() { return NowMicros() / 1000000L; }
+
+  virtual void PrintTime(
+      std::string prof_name,
+      uint64 ts,
+      uint64 time,
+      bool print_tid = false,
+      std::string extra = "") {
+    std::stringstream ss;
+    ss << "tf-profile, prof_name " << prof_name;
+    if (print_tid) {
+      std::thread::id id = std::this_thread::get_id();
+      ss << ", id " << id;
+    }
+    ss << ", ts " << ts << ", time " << time;
+    if (extra != "") {
+      ss << ", " << extra;
+    }
+    ss << std::endl;
+    std::cerr << ss.str();
+  }
 };
 
 }  // namespace tensorflow

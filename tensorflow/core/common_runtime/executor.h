@@ -93,6 +93,7 @@ class Executor {
 
     // If true, calls Sync() on the device.
     bool sync_on_finish = false;
+    bool print_this_run = false;
 
     typedef std::function<void()> Closure;
     typedef std::function<void(Closure)> Runner;

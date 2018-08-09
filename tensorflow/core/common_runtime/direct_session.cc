@@ -65,6 +65,7 @@ limitations under the License.
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/util/device_name_utils.h"
 #include "tensorflow/core/util/env_var.h"
+#include "tensorflow/core/platform/env_time.h"
 
 namespace tensorflow {
 
@@ -490,6 +491,7 @@ Status DirectSession::RunInternal(int64 step_id, const RunOptions& run_options,
   args.tensor_store = &run_state.tensor_store;
   args.step_container = &run_state.step_container;
   args.sync_on_finish = sync_on_finish_;
+  args.print_this_run = run_options.print_this_run();
 
   const bool do_trace = (run_options.trace_level() > RunOptions::NO_TRACE);
 
