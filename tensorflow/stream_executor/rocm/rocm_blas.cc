@@ -32,6 +32,9 @@ limitations under the License.
 
 #include "tensorflow/stream_executor/rocm/rocm_blas.h"
 
+#define EIGEN_USE_GPU
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+
 #include <assert.h>
 #include <complex>
 
@@ -204,6 +207,7 @@ namespace wrap {
   __macro(rocblas_zhpr2)                    */ \
   __macro(rocblas_sgemm)                    \
   __macro(rocblas_dgemm)                    \
+  __macro(rocblas_hgemm)                    \
 /*  __macro(rocblas_cgemm)                    \
   __macro(rocblas_zgemm)                    \
   __macro(rocblas_ssyrk)                    \
@@ -2011,7 +2015,6 @@ bool ROCMBlas::DoBlasGemm(
     float alpha, const DeviceMemory<Eigen::half> &a, int lda,
     const DeviceMemory<Eigen::half> &b, int ldb, float beta,
     DeviceMemory<Eigen::half> *c, int ldc) {
-#if ROCM_VERSION >= 7050
   VLOG(1) << port::Printf(
       "doing rocBLAS SGEMM: at=%d bt=%d m=%llu n=%llu "
       "k=%llu alpha=%f a=%p lda=%d b=%p ldb=%d beta=%f "
@@ -2040,21 +2043,16 @@ bool ROCMBlas::DoBlasGemm(
                       "precondition violation";
     }
   }
-  // TODO(sesse): Consider supporting the Hgemm interface, which uses half
-  // calculations internally (faster on newer devices, such as Pascal and TX1,
-  // but less precise).
-  // TODO (jmd): rocBLAS has a hgemm
-  return false;
-  //return DoBlasInternal(
-  //    wrap::rocblas_SgemmEx, stream, true /* = pointer_mode_host */,
-  //    ROCMBlasTranspose(transa), ROCMBlasTranspose(transb), m, n, k, &alpha,
-  //    ROCMMemory(a), SE_ROCM_DATA_HALF, lda, ROCMMemory(b), SE_ROCM_DATA_HALF,
-  //    ldb, &beta, ROCMMemoryMutable(c), SE_ROCM_DATA_HALF, ldc);
-#else
-  LOG(ERROR) << "fp16 sgemm is not implemented in this rocBLAS version "
-             << "(need at least ROCM 7.5)";
-  return false;
-#endif
+  const Eigen::half alpha_half(alpha);
+  const Eigen::half beta_half(beta);
+  return DoBlasInternal(
+      wrap::rocblas_hgemm, stream, true /* = pointer_mode_host */,
+      ROCMBlasTranspose(transa), ROCMBlasTranspose(transb), m, n, k,
+      reinterpret_cast<const rocblas_half*>(&alpha_half),
+      reinterpret_cast<const rocblas_half*>(ROCMMemory(a)), lda,
+      reinterpret_cast<const rocblas_half*>(ROCMMemory(b)), ldb,
+      reinterpret_cast<const rocblas_half*>(&beta_half),
+      reinterpret_cast<rocblas_half*>(ROCMMemoryMutable(c)), ldc);
 }
 
 bool ROCMBlas::DoBlasGemm(Stream *stream, blas::Transpose transa,
