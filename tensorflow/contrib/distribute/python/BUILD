@@ -384,6 +384,16 @@ gpu_py_test(
         "//tensorflow/python:variables",
         "//tensorflow/python/eager:context",
         "//tensorflow/python/eager:test",
+        "//third_party/py/numpy",
+        "@absl_py//absl/testing:parameterized",
+    ],
+)
+
+gpu_py_test(
+    name = "step_fn_test",
+    srcs = ["step_fn_test.py"],
+    additional_deps = [
+        ":step_fn_test_lib",
     ],
     tags = [
         "multi_and_single_gpu",

@@ -279,6 +279,7 @@ StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitFloatUnaryOp(
     default:
       return ElementalIrEmitter::EmitFloatUnaryOp(op, operand_value);
   }
+  return EmitROCDLMathCall("__ocml_tanh", {value}, {prim_type}, prim_type);
 }
 
 llvm::Value* GpuElementalIrEmitter::EmitThreadId() const {
