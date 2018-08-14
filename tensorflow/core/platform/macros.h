@@ -86,6 +86,9 @@ limitations under the License.
     (TF_HAS_BUILTIN(__builtin_expect) || (defined(__GNUC__) && __GNUC__ >= 3))
 #define TF_PREDICT_FALSE(x) (__builtin_expect(x, 0))
 #define TF_PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))
+#else if (!defined(__HIP_DEVICE_COMPILE__)) && (TF_HAS_BUILTIN(__builtin_expect) || (defined(__GNUC__) && __GNUC__ >= 3))
+#define TF_PREDICT_FALSE(x) (__builtin_expect(x, 0))
+#define TF_PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))
 #else
 #define TF_PREDICT_FALSE(x) (x)
 #define TF_PREDICT_TRUE(x) (x)

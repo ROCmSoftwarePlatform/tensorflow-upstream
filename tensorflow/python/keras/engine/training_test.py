@@ -1706,6 +1706,25 @@ class TestTrainingWithDataTensors(test.TestCase):
                               'dropout_acc']
     self.assertEqual(reference_metric_names, model.metrics_names)
 
+    dense = keras.layers.Dense(4, name='dense')
+    c = dense(a)
+    d = dense(b)
+    e = keras.layers.Dropout(0.5, name='dropout')(c)
+
+    model = keras.models.Model([a, b], [d, e])
+
+    optimizer = RMSPropOptimizer(learning_rate=0.001)
+    loss = 'mse'
+    loss_weights = [1., 0.5]
+    metrics = ['mae', 'acc']
+    model.compile(optimizer, loss, metrics=metrics, loss_weights=loss_weights)
+    reference_metric_names = ['loss', 'dense_loss', 'dropout_loss',
+                              'dense_mean_absolute_error',
+                              'dense_acc',
+                              'dropout_mean_absolute_error',
+                              'dropout_acc']
+    self.assertEqual(reference_metric_names, model.metrics_names)
+
 
 class TestTrainingWithDatasetIterators(test.TestCase):
 

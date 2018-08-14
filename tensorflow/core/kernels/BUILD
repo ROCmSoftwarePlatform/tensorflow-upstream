@@ -3,7 +3,7 @@
 #
 # Note: Any test that uses GPU support and which we would like to
 # benchmark should be linked statically so that it can be executed
-# from a py_binary or cuda_py_test test logger.  For such a test,
+# from a py_binary or gpu_py_test test logger.  For such a test,
 # append "_gpu" to the test name to invoke the GPU benchmarks.  Example:
 #
 #   # for CPU tests
@@ -32,7 +32,7 @@ load(
     "tf_cc_tests",
     "tf_cc_binary",
     "tf_copts",
-    "tf_cuda_library",
+    "tf_gpu_library",
     "tf_opts_nortti_if_android",
     "tf_kernel_library",
     "tf_mkl_kernel_library",
@@ -41,8 +41,8 @@ load(
     "if_override_eigen_strong_inline",
 )
 load("@local_config_sycl//sycl:build_defs.bzl", "if_sycl")
-load("//tensorflow:tensorflow.bzl", "tf_cuda_cc_test")
-load("//tensorflow:tensorflow.bzl", "tf_cuda_cc_tests")
+load("//tensorflow:tensorflow.bzl", "tf_gpu_cc_test")
+load("//tensorflow:tensorflow.bzl", "tf_gpu_cc_tests")
 load(
     "//tensorflow/core:platform/default/build_config.bzl",
     "tf_proto_library",
@@ -52,7 +52,8 @@ load(
     "//third_party/mkl:build_defs.bzl",
     "if_mkl",
 )
-load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda")
+load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda", "if_cuda_is_configured")
+load("@local_config_rocm//rocm:build_defs.bzl", "if_rocm", "if_rocm_is_configured")
 
 config_setting(
     # Add "--define tensorflow_xsmm=1" to your build command to use libxsmm for
@@ -155,8 +156,8 @@ tf_kernel_library(
     gpu_srcs = [
         "concat_lib_gpu_impl.cu.cc",
         "concat_lib.h",
-        "cuda_device_array.h",
-        "cuda_device_array_gpu.h",
+        "gpu_device_array.h",
+        "gpu_device_array_gpu.h",
     ],
     deps = [
         ":bounds_check",
@@ -248,12 +249,12 @@ cc_library(
     ],
 )
 
-tf_cuda_library(
+tf_gpu_library(
     name = "ops_testutil",
     testonly = 1,
     srcs = ["ops_testutil.cc"],
     hdrs = ["ops_testutil.h"],
-    cuda_deps = [
+    gpu_deps = [
         "//tensorflow/core:gpu_lib",
         "//tensorflow/core:gpu_runtime",
     ],
@@ -440,7 +441,7 @@ tf_kernel_library(
         "split_lib.h",
     ],
     deps = [
-        ":cuda_device_array",
+        ":gpu_device_array",
         "//tensorflow/core:framework",
         "//third_party/eigen3",
     ],
@@ -508,10 +509,10 @@ cc_header_only_library(
 )
 
 cc_library(
-    name = "cuda_device_array",
+    name = "gpu_device_array",
     hdrs = [
-        "cuda_device_array.h",
-        "cuda_device_array_gpu.h",
+        "gpu_device_array.h",
+        "gpu_device_array_gpu.h",
     ],
     visibility = ["//tensorflow:__subpackages__"],
     deps = [
@@ -795,7 +796,7 @@ tf_kernel_library(
 )
 
 # TODO(ebrevdo): Add benchmarks once the op is in the autogen array namespace.
-# tf_cuda_cc_test(
+# tf_gpu_cc_test(
 #     name = "compare_and_bitpack_op_test",
 #     srcs = ["compare_and_bitpack_op_test.cc"],
 #     deps = [
@@ -854,14 +855,14 @@ tf_kernel_library(
 
 tf_kernel_library(
     name = "split_op",
-    gpu_srcs = ["cuda_device_array.h"],
+    gpu_srcs = ["gpu_device_array.h"],
     prefix = "split_op",
     deps = ARRAY_DEPS + [":split_lib"],
 )
 
 tf_kernel_library(
     name = "split_v_op",
-    gpu_srcs = ["cuda_device_array.h"],
+    gpu_srcs = ["gpu_device_array.h"],
     prefix = "split_v_op",
     deps = ARRAY_DEPS + [":split_lib"],
 )
@@ -933,6 +934,8 @@ tf_kernel_library(
     deps = if_cuda([
         ":cuda_solvers",
         "@cub_archive//:cub",
+    ]) + if_rocm([
+        "@rocprim_archive//:rocprim",
     ]) + ARRAY_DEPS,
 )
 
@@ -1008,7 +1011,7 @@ tf_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "bincount_op_test",
     size = "small",
     srcs = ["bincount_op_test.cc"],
@@ -1027,7 +1030,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "constant_op_test",
     size = "small",
     srcs = ["constant_op_test.cc"],
@@ -1237,7 +1240,7 @@ tf_kernel_library(
     alwayslink = 0,
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "gather_op_test",
     size = "small",
     srcs = ["gather_op_test.cc"],
@@ -1255,7 +1258,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "gather_nd_op_test",
     size = "small",
     srcs = ["gather_nd_op_test.cc"],
@@ -1349,7 +1352,7 @@ tf_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "quantize_and_dequantize_op_test",
     size = "small",
     srcs = ["quantize_and_dequantize_op_test.cc"],
@@ -1712,7 +1715,7 @@ tf_kernel_library(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "scoped_allocator_ops_test",
     srcs = ["scoped_allocator_ops_test.cc"],
     linkstatic = tf_kernel_tests_linkstatic(),  #Required for benchmarking
@@ -1775,14 +1778,15 @@ tf_kernel_library(
     deps = DYNAMIC_DEPS + [
         ":fill_functor",
         ":gather_functor",
-    ] + if_cuda(["@cub_archive//:cub"]),
+    ] + if_cuda(["@cub_archive//:cub"])
+    + if_rocm(["@rocprim_archive//:rocprim"]),
 )
 
 tf_kernel_library(
     name = "dynamic_stitch_op",
     gpu_srcs = [
-        "cuda_device_array.h",
-        "cuda_device_array_gpu.h",
+        "gpu_device_array.h",
+        "gpu_device_array_gpu.h",
     ],
     prefix = "dynamic_stitch_op",
     deps = DYNAMIC_DEPS,
@@ -1845,7 +1849,7 @@ tf_kernel_library(
     ],
 )
 
-tf_cuda_cc_tests(
+tf_gpu_cc_tests(
     name = "dynamic_op_test",
     size = "small",
     srcs = [
@@ -2304,7 +2308,7 @@ tf_cc_tests(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "adjust_contrast_op_benchmark_test",
     srcs = ["adjust_contrast_op_benchmark_test.cc"],
     deps = [
@@ -2320,7 +2324,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "resize_benchmark_test",
     srcs = ["resize_op_benchmark_test.cc"],
     deps = [
@@ -2505,10 +2509,11 @@ tf_kernel_library(
     deps = [
         "//tensorflow/core:framework",
         "//tensorflow/core:lib",
+    ] + if_cuda([
         "//tensorflow/core/platform/default/build_config:cublas_plugin",
         "@local_config_cuda//cuda:cublas",
         "@local_config_cuda//cuda:cusolver",
-    ],
+    ])
 )
 
 LINALG_DEPS = [
@@ -2826,7 +2831,7 @@ tf_kernel_library(
 
 tf_kernel_library(
     name = "bucketize_op",
-    gpu_srcs = ["cuda_device_array.h"],
+    gpu_srcs = ["gpu_device_array.h"],
     prefix = "bucketize_op",
     deps = ARRAY_DEPS,
 )
@@ -2905,15 +2910,17 @@ tf_kernel_library(
     name = "reduction_ops",
     gpu_srcs = ["reduction_gpu_kernels.cu.h"],
     prefix = "reduction_ops",
-    deps = MATH_DEPS + [":transpose_functor"] + if_cuda(["@cub_archive//:cub"]),
+    deps = MATH_DEPS + [":transpose_functor"] + if_cuda(["@cub_archive//:cub"]) + if_rocm(["@rocprim_archive//:rocprim"]),
 )
 
 tf_kernel_library(
     name = "segment_reduction_ops",
     prefix = "segment_reduction_ops",
-    deps = MATH_DEPS + if_cuda([
+    deps = MATH_DEPS + if_cuda_is_configured([
         ":cuda_solvers",
-    ]),
+    ]) + if_rocm_is_configured([
+        ":cuda_solvers",
+    ])
 )
 
 tf_kernel_library(
@@ -2946,7 +2953,7 @@ tf_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "cast_op_test",
     size = "small",
     srcs = ["cast_op_test.cc"],
@@ -3006,7 +3013,7 @@ tf_cc_tests(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "cwise_ops_test",
     size = "small",
     srcs = ["cwise_ops_test.cc"],
@@ -3026,7 +3033,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "matmul_op_test",
     size = "small",
     srcs = ["matmul_op_test.cc"],
@@ -3048,7 +3055,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "batch_matmul_op_test",
     size = "small",
     srcs = ["batch_matmul_op_test.cc"],
@@ -3066,7 +3073,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "reduction_ops_test",
     size = "small",
     srcs = ["reduction_ops_test.cc"],
@@ -3150,7 +3157,7 @@ tf_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "sparse_matmul_op_test",
     size = "small",
     srcs = ["sparse_matmul_op_test.cc"],
@@ -3168,7 +3175,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "split_op_test",
     size = "small",
     srcs = ["split_op_test.cc"],
@@ -3186,7 +3193,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "split_v_op_test",
     size = "small",
     srcs = ["split_v_op_test.cc"],
@@ -3204,7 +3211,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "diag_op_test",
     size = "small",
     srcs = ["diag_op_test.cc"],
@@ -3408,10 +3415,11 @@ tf_kernel_library(
 tf_kernel_library(
     name = "softmax_op",
     prefix = "softmax_op",
-    deps = NN_DEPS + if_cuda([
-        ":reduction_ops",
+    deps = NN_DEPS + [":reduction_ops",] + if_cuda([
         "@cub_archive//:cub",
-    ]),
+	]) + if_rocm([
+	"@rocprim_archive//:rocprim",
+	]),
 )
 
 tf_kernel_library(
@@ -3429,7 +3437,7 @@ tf_kernel_library(
 tf_kernel_library(
     name = "topk_op",
     prefix = "topk_op",
-    deps = NN_DEPS + if_cuda(["@cub_archive//:cub"]),
+    deps = NN_DEPS + if_cuda(["@cub_archive//:cub"]) + if_rocm(["@rocprim_archive//:rocprim"]),
 )
 
 tf_kernel_library(
@@ -3452,7 +3460,8 @@ tf_kernel_library(
         "//tensorflow/core:lib",
         "//tensorflow/core:lib_internal",
         "//third_party/eigen3",
-    ] + if_cuda(["@cub_archive//:cub"]),
+    ] + if_cuda(["@cub_archive//:cub"])
+    + if_rocm(["@rocprim_archive//:rocprim"]),
 )
 
 tf_kernel_library(
@@ -3463,7 +3472,8 @@ tf_kernel_library(
         "//tensorflow/core:lib",
         "//tensorflow/core:lib_internal",
         "//third_party/eigen3",
-    ] + if_cuda(["@cub_archive//:cub"]),
+    ] + if_cuda(["@cub_archive//:cub"])
+    + if_rocm(["@rocprim_archive//:rocprim"]),
 )
 
 tf_kernel_library(
@@ -3477,10 +3487,11 @@ tf_kernel_library(
         "//tensorflow/core:lib_internal",
         "//tensorflow/core:nn_grad",
         "//tensorflow/core:nn_ops_op_lib",
-    ] + if_cuda(["@cub_archive//:cub"]),
+    ] + if_cuda(["@cub_archive//:cub"])
+    + if_rocm(["@rocprim_archive//:rocprim"]),
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "lrn_op_test",
     srcs = ["lrn_op_test.cc"],
     deps = [
@@ -3500,7 +3511,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "xent_op_test",
     srcs = ["xent_op_test.cc"],
     deps = [
@@ -3520,7 +3531,7 @@ tf_cuda_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "nn_ops_test",
     srcs = ["nn_ops_test.cc"],
     deps = [
@@ -3545,7 +3556,7 @@ tf_kernel_library(
     name = "pooling_ops",
     srcs = [
         "avgpooling_op.cc",
-        "cudnn_pooling_gpu.cc",
+        "dnn_pooling_gpu.cc",
         "fractional_avg_pool_op.cc",
         "fractional_max_pool_op.cc",
         "fractional_pool_common.cc",
@@ -3555,7 +3566,7 @@ tf_kernel_library(
     ],
     hdrs = [
         "avgpooling_op.h",
-        "cudnn_pooling_gpu.h",
+        "dnn_pooling_gpu.h",
         "fractional_pool_common.h",
         "maxpooling_op.h",
         "pooling_ops_3d.h",
@@ -3666,7 +3677,7 @@ tf_kernel_library(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "spacetobatch_benchmark_test",
     srcs = ["spacetobatch_benchmark_test.cc"],
     deps = [
@@ -3805,7 +3816,7 @@ tf_kernel_library(
     deps = RANDOM_OPS_DEPS,
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "random_op_test",
     size = "small",
     srcs = ["random_op_test.cc"],
@@ -4029,7 +4040,7 @@ tf_kernel_library(
     deps = SPARSE_DEPS,
 )
 
-tf_cuda_cc_tests(
+tf_gpu_cc_tests(
     name = "sparse2_tests",
     size = "small",
     srcs = [
@@ -4223,7 +4234,7 @@ tf_cc_test(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "scatter_nd_op_test",
     size = "small",
     srcs = ["scatter_nd_op_test.cc"],
@@ -4371,7 +4382,7 @@ tf_kernel_library(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "multinomial_op_test",
     size = "small",
     srcs = ["multinomial_op_test.cc"],
@@ -4398,7 +4409,7 @@ tf_kernel_library(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "parameterized_truncated_normal_op_test",
     size = "small",
     srcs = ["parameterized_truncated_normal_op_test.cc"],
@@ -4425,7 +4436,7 @@ tf_kernel_library(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "random_poisson_op_test",
     size = "small",
     srcs = ["random_poisson_op_test.cc"],
@@ -4532,7 +4543,7 @@ tf_kernel_library(
     alwayslink = 1,
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "spectrogram_op_test",
     size = "small",
     srcs = ["spectrogram_op_test.cc"],
@@ -4650,7 +4661,7 @@ tf_kernel_library(
     alwayslink = 1,
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "mfcc_op_test",
     size = "small",
     srcs = ["mfcc_op_test.cc"],

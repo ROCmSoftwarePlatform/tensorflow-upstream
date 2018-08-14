@@ -1,11 +1,8 @@
 /* Copyright 2015 The TensorFlow Authors. All Rights Reserved.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,16 +19,17 @@ limitations under the License.
 
 namespace tensorflow {
 
-GPUBFCAllocator::GPUBFCAllocator(CudaGpuId cuda_gpu_id, size_t total_memory,
-                                 const string& name)
-    : GPUBFCAllocator(cuda_gpu_id, total_memory, GPUOptions(), name) {}
+GPUBFCAllocator::GPUBFCAllocator(PlatformGpuId platform_gpu_id,
+                                 size_t total_memory, const string& name)
+    : GPUBFCAllocator(platform_gpu_id, total_memory, GPUOptions(), name) {}
 
-GPUBFCAllocator::GPUBFCAllocator(CudaGpuId cuda_gpu_id, size_t total_memory,
+GPUBFCAllocator::GPUBFCAllocator(PlatformGpuId platform_gpu_id,
+                                 size_t total_memory,
                                  const GPUOptions& gpu_options,
                                  const string& name)
     : BFCAllocator(
           new GPUMemAllocator(
-              GpuIdUtil::ExecutorForCudaGpuId(cuda_gpu_id).ValueOrDie(),
+              GpuIdUtil::ExecutorForPlatformGpuId(platform_gpu_id).ValueOrDie(),
               gpu_options.per_process_gpu_memory_fraction() > 1.0 ||
                   gpu_options.experimental().use_unified_memory()),
           total_memory, gpu_options.allow_growth(), name) {}

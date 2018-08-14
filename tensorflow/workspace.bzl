@@ -1,6 +1,7 @@
 # TensorFlow external dependencies that can be loaded in WORKSPACE files.
 
 load("//third_party/gpus:cuda_configure.bzl", "cuda_configure")
+load("//third_party/gpus:rocm_configure.bzl", "rocm_configure")
 load("//third_party/tensorrt:tensorrt_configure.bzl", "tensorrt_configure")
 load("//third_party:nccl/nccl_configure.bzl", "nccl_configure")
 load("//third_party/mkl:build_defs.bzl", "mkl_repository")
@@ -35,6 +36,7 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
   nccl_configure(name="local_config_nccl")
   git_configure(name="local_config_git")
   sycl_configure(name="local_config_sycl")
+  rocm_configure(name="local_config_rocm")
   python_configure(name="local_config_python")
 
   # For windows bazel build
@@ -647,6 +649,17 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
       sha256 = "6bfa06ab52a650ae7ee6963143a0bbc667d6504822cbd9670369b598f18c58c3",
       strip_prefix = "cub-1.8.0",
       build_file = clean_dep("//third_party:cub.BUILD"),
+  )
+
+  tf_http_archive(
+      name = "rocprim_archive",
+      urls = [
+          "https://mirror.bazel.build/github.com/ROCmSoftwarePlatform/rocPRIM/archive/78faf38.zip",
+          "https://github.com/ROCmSoftwarePlatform/rocPRIM/archive/78faf38.zip"
+      ],
+      sha256 = "95584fb3b8aaf5ad43e0d271912f6b5c048020e67ba67f32f8a8b8cd67dc2bff",
+      strip_prefix = "rocPRIM-78faf386a45de246e0eb34c2b2e589f29c5eb163",
+      build_file = clean_dep("//third_party:rocprim.BUILD"),
   )
 
   tf_http_archive(

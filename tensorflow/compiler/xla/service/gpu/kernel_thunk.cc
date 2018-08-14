@@ -46,13 +46,15 @@ Status KernelThunk::Initialize(const GpuExecutable& executable,
     loader_spec_->AddCudaPtxInMemory(
         se::port::StringPiece(ptx.data(), ptx.size()), kernel_name_);
 
+  // XXX figure out how to cope with both CUDA and ROCm platforms
+#if GOOGLE_CUDA
     if (!executable.cubin().empty()) {
       loader_spec_->AddCudaCubinInMemory(
           reinterpret_cast<const char*>(executable.cubin().data()),
           kernel_name_);
     }
-  }
-
+#endif
+   
   // Load the kernel into the device if necessary.
   //
   // We could alternatively do this within ExecuteOnStream, but doing it here
@@ -65,6 +67,7 @@ Status KernelThunk::Initialize(const GpuExecutable& executable,
       return InternalError("Unable to load kernel %s", kernel_name_.c_str());
     }
   }
+#endif
 
   return Status::OK();
 }

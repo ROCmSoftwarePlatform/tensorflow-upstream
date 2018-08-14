@@ -10,7 +10,7 @@ exports_files(["LICENSE"])
 
 package(default_visibility = ["//tensorflow:__subpackages__"])
 
-load("//tensorflow:tensorflow.bzl", "cuda_py_test")
+load("//tensorflow:tensorflow.bzl", "gpu_py_test")
 
 py_library(
     name = "linalg_py",
@@ -26,7 +26,7 @@ py_library(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "linear_operator_addition_test",
     size = "small",
     srcs = ["python/kernel_tests/linear_operator_addition_test.py"],
@@ -40,5 +40,49 @@ cuda_py_test(
         "//tensorflow/python:framework_test_lib",
         "//tensorflow/python:math_ops",
         "//tensorflow/python:platform_test",
+    ],
+)
+
+gpu_py_test(
+    name = "linear_operator_block_diag_test",
+    size = "medium",
+    srcs = ["python/kernel_tests/linear_operator_block_diag_test.py"],
+    additional_deps = [
+        ":linalg_py",
+        "//third_party/py/numpy",
+        "//tensorflow/python:array_ops",
+        "//tensorflow/python:client_testlib",
+        "//tensorflow/python:framework",
+        "//tensorflow/python:framework_for_generated_wrappers",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:math_ops",
+        "//tensorflow/python:platform_test",
+    ],
+    shard_count = 5,
+    tags = [
+        "noasan",
+        "optonly",
+    ],
+)
+
+gpu_py_test(
+    name = "linear_operator_kronecker_test",
+    size = "medium",
+    srcs = ["python/kernel_tests/linear_operator_kronecker_test.py"],
+    additional_deps = [
+        ":linalg_py",
+        "//third_party/py/numpy",
+        "//tensorflow/python:array_ops",
+        "//tensorflow/python:client_testlib",
+        "//tensorflow/python:framework",
+        "//tensorflow/python:framework_for_generated_wrappers",
+        "//tensorflow/python:framework_test_lib",
+        "//tensorflow/python:math_ops",
+        "//tensorflow/python:platform_test",
+    ],
+    shard_count = 8,
+    tags = [
+        "noasan",
+        "optonly",
     ],
 )

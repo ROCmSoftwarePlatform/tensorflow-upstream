@@ -24,6 +24,9 @@ limitations under the License.
 #include "tensorflow/core/common_runtime/device.h"
 #include "tensorflow/core/common_runtime/device_mgr.h"
 #include "tensorflow/core/common_runtime/dma_helper.h"
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+#include "tensorflow/core/common_runtime/gpu/gpu_util.h"
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 #include "tensorflow/core/common_runtime/local_device.h"
 #include "tensorflow/core/common_runtime/process_util.h"
 #include "tensorflow/core/common_runtime/step_stats_collector.h"
@@ -472,6 +475,7 @@ void GrpcWorker::GrpcRecvTensorAsync(CallOptions* opts,
           {
             // Non-DMA cases.
             if (src_dev->tensorflow_gpu_device_info() && (!on_host)) {
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
               DeviceContext* send_dev_context = send_args.device_context;
               AllocatorAttributes alloc_attrs;
               alloc_attrs.set_gpu_compatible(true);
@@ -493,6 +497,9 @@ void GrpcWorker::GrpcRecvTensorAsync(CallOptions* opts,
 
               send_dev_context->CopyDeviceTensorToCPU(
                   &val, request->rendezvous_key(), src_dev, copy, copy_ready);
+#else
+              done(errors::Internal("No GPU device in process"));
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
             } else {
               grpc::EncodeTensorToByteBuffer(is_dead, val, response);
               done(Status::OK());

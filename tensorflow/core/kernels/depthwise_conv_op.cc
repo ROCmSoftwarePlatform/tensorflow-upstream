@@ -38,10 +38,9 @@ limitations under the License.
 #include "tensorflow/core/util/use_cudnn.h"
 #include "tensorflow/core/util/work_sharder.h"
 
-#if GOOGLE_CUDA
-#include "cuda/include/cudnn.h"
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 #include "tensorflow/core/platform/stream_executor.h"
-#endif  // GOOGLE_CUDA
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 
 namespace tensorflow {
 
@@ -246,7 +245,7 @@ extern template struct LaunchConv2DOp<CPUDevice, Eigen::half>;
 extern template struct LaunchConv2DOp<CPUDevice, float>;
 extern template struct LaunchConv2DOp<CPUDevice, double>;
 
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 
 // Extern template instantiated in conv_ops.cc.
 extern template struct LaunchConv2DOp<GPUDevice, Eigen::half>;
@@ -460,39 +459,20 @@ TF_CALL_float(REGISTER_CPU_KERNEL);
 TF_CALL_double(REGISTER_CPU_KERNEL);
 #endif
 
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+REGISTER_KERNEL_BUILDER(Name("DepthwiseConv2dNative")
+                            .Device(DEVICE_GPU)
+                            .TypeConstraint<Eigen::half>("T"),
+                        DepthwiseConv2dNativeOp<GPUDevice, Eigen::half>);
 
-#define REGISTER_GPU_KERNEL(T)                                                 \
-  REGISTER_KERNEL_BUILDER(                                                     \
-      Name("DepthwiseConv2dNative").Device(DEVICE_GPU).TypeConstraint<T>("T"), \
-      DepthwiseConv2dNativeOp<GPUDevice, T>)
+REGISTER_KERNEL_BUILDER(
+    Name("DepthwiseConv2dNative").Device(DEVICE_GPU).TypeConstraint<float>("T"),
+    DepthwiseConv2dNativeOp<GPUDevice, float>);
 
-TF_CALL_half(REGISTER_GPU_KERNEL);
-TF_CALL_float(REGISTER_GPU_KERNEL);
-TF_CALL_double(REGISTER_GPU_KERNEL);
-
-#if CUDNN_VERSION >= 7000
-template <typename T>
-class DepthwiseConv2dGroupedConvOp
-    : public DepthwiseConv2dNativeOp<GPUDevice, T> {
- public:
-  DepthwiseConv2dGroupedConvOp(OpKernelConstruction* context)
-      : DepthwiseConv2dNativeOp<GPUDevice, T>(context) {
-    this->use_cudnn_grouped_conv_ = true;
-  }
-};
-
-#define REGISTER_GROUPED_CONV_KERNEL(T)                            \
-  REGISTER_KERNEL_BUILDER(Name("DepthwiseConv2dNative")            \
-                              .Device(DEVICE_GPU)                  \
-                              .TypeConstraint<T>("T")              \
-                              .Label("cudnn_grouped_convolution"), \
-                          DepthwiseConv2dGroupedConvOp<T>)
-
-TF_CALL_half(REGISTER_GROUPED_CONV_KERNEL);
-TF_CALL_float(REGISTER_GROUPED_CONV_KERNEL);
-TF_CALL_double(REGISTER_GROUPED_CONV_KERNEL);
-#endif  // CUDNN_VERSION
-#endif  // GOOGLE_CUDA
+REGISTER_KERNEL_BUILDER(Name("DepthwiseConv2dNative")
+                            .Device(DEVICE_GPU)
+                            .TypeConstraint<double>("T"),
+                        DepthwiseConv2dNativeOp<GPUDevice, double>);
+#endif
 
 }  // namespace tensorflow

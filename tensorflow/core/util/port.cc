@@ -29,8 +29,19 @@ bool IsGoogleCudaEnabled() {
 #endif
 }
 
-bool CudaSupportsHalfMatMulAndConv() {
+bool IsBuiltWithROCm() {
+#if TENSORFLOW_USE_ROCM
+  return true;
+#else
+  return false;
+#endif
+}
+
+  
+bool GpuSupportsHalfMatMulAndConv() {
 #if GOOGLE_CUDA
+  return true;
+#elif TENSORFLOW_USE_ROCM
   return true;
 #else
   return false;
