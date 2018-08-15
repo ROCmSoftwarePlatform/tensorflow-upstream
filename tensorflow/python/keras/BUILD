@@ -439,7 +439,7 @@ py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cudnn_recurrent_test",
     size = "large",
     srcs = ["layers/cudnn_recurrent_test.py"],

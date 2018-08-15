@@ -686,7 +686,7 @@ cc_library(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "remapper_test",
     srcs = ["remapper_test.cc"],
     deps = [
