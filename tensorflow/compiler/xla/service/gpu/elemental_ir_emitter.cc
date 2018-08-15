@@ -232,7 +232,7 @@ StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitLog(
 
 StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitLog1p(
     PrimitiveType prim_type, llvm::Value* value) const {
-  return EmitLibdeviceMathCall("__nv_log1p", {value}, {prim_type}, prim_type);
+  return EmitROCDLMathCall("__ocml_log1p", {value}, {prim_type}, prim_type);
 }
 
 StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitSin(
@@ -252,7 +252,7 @@ StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitExp(
 
 StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitExpm1(
     PrimitiveType prim_type, llvm::Value* value) const {
-  return EmitLibdeviceMathCall("__nv_expm1", {value}, {prim_type}, prim_type);
+  return EmitROCDLMathCall("__ocml_expm1", {value}, {prim_type}, prim_type);
 }
 
 StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitPow(PrimitiveType prim_type,
@@ -279,7 +279,6 @@ StatusOr<llvm::Value*> GpuElementalIrEmitter::EmitFloatUnaryOp(
     default:
       return ElementalIrEmitter::EmitFloatUnaryOp(op, operand_value);
   }
-  return EmitLibdeviceMathCall("__nv_tanh", {value}, {prim_type}, prim_type);
 }
 
 llvm::Value* GpuElementalIrEmitter::EmitThreadId() const {

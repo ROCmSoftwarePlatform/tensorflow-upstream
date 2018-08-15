@@ -40,7 +40,7 @@ Status KernelThunk::Initialize(const GpuExecutable& executable,
   tensorflow::mutex_lock lock(mutex_);
   if (!loader_spec_) {
     loader_spec_.reset(new se::MultiKernelLoaderSpec(args_.size()));
-    tensorflow::StringPiece ptx = executable.ptx();
+    tensorflow::StringPiece ptx = executable.text();
     // Convert tensorflow::StringPiece to se::port::StringPiece because
     // StreamExecutor uses the latter.
     loader_spec_->AddCudaPtxInMemory(
@@ -54,7 +54,7 @@ Status KernelThunk::Initialize(const GpuExecutable& executable,
           kernel_name_);
     }
 #endif
-   
+  }   
   // Load the kernel into the device if necessary.
   //
   // We could alternatively do this within ExecuteOnStream, but doing it here
@@ -67,7 +67,6 @@ Status KernelThunk::Initialize(const GpuExecutable& executable,
       return InternalError("Unable to load kernel %s", kernel_name_.c_str());
     }
   }
-#endif
 
   return Status::OK();
 }
