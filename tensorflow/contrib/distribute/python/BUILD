@@ -377,22 +377,6 @@ gpu_py_test(
     name = "step_fn_test",
     srcs = ["step_fn_test.py"],
     additional_deps = [
-        ":single_loss_example",
-        ":combinations",
-        "@absl_py//absl/testing:parameterized",
-        "//third_party/py/numpy",
-        "//tensorflow/python:variables",
-        "//tensorflow/python/eager:context",
-        "//tensorflow/python/eager:test",
-        "//third_party/py/numpy",
-        "@absl_py//absl/testing:parameterized",
-    ],
-)
-
-gpu_py_test(
-    name = "step_fn_test",
-    srcs = ["step_fn_test.py"],
-    additional_deps = [
         ":step_fn_test_lib",
     ],
     tags = [
@@ -463,7 +447,7 @@ py_library(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cross_tower_utils_test",
     srcs = ["cross_tower_utils_test.py"],
     additional_deps = [
@@ -499,7 +483,7 @@ py_library(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cross_tower_ops_test",
     srcs = ["cross_tower_ops_test.py"],
     additional_deps = [
@@ -556,7 +540,7 @@ py_library(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "input_ops_test",
     srcs = ["input_ops_test.py"],
     additional_deps = [
@@ -577,7 +561,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "keras_test",
     srcs = ["keras_test.py"],
     additional_deps = [

@@ -178,7 +178,7 @@ cc_library(
     ],
 )
 
-tf_cuda_library(
+tf_gpu_library(
     name = "attr_builder",
     srcs = ["attr_builder.cc"],
     hdrs = ["attr_builder.h"],

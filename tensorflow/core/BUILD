@@ -94,7 +94,7 @@ load(
 load("//tensorflow:tensorflow.bzl", "tf_cc_test_mkl")
 load("//tensorflow:tensorflow.bzl", "tf_cc_test_gpu")
 load("//tensorflow:tensorflow.bzl", "tf_cc_tests_gpu")
-load("//tensorflow:tensorflow.bzl", "tf_cuda_cc_test")
+load("//tensorflow:tensorflow.bzl", "tf_gpu_cc_test")
 load("//tensorflow:tensorflow.bzl", "tf_version_info_genrule")
 load("//tensorflow:tensorflow.bzl", "tf_gpu_only_cc_test")
 
@@ -122,10 +122,6 @@ load(
     "tf_additional_mpi_lib_defines",
     "tf_additional_proto_hdrs",
     "tf_additional_proto_srcs",
-    "tf_additional_cupti_wrapper_deps",
-    "tf_additional_libdevice_data",
-    "tf_additional_libdevice_deps",
-    "tf_additional_libdevice_srcs",
     "tf_additional_rocdl_data",
     "tf_additional_rocdl_deps",
     "tf_additional_rocdl_srcs",
@@ -3674,7 +3670,7 @@ tf_cc_tests_gpu(
     ],
 )
 
-tf_cuda_cc_test(
+tf_gpu_cc_test(
     name = "gpu_device_unified_memory_test",
     size = "small",
     srcs = [
@@ -3683,7 +3679,7 @@ tf_cuda_cc_test(
     linkstatic = tf_kernel_tests_linkstatic(),
     # Runs test on a Guitar cluster that uses P100s to test unified memory
     # allocations.
-    tags = tf_cuda_tests_tags() + [
+    tags = tf_gpu_tests_tags() + [
         "guitar",
         "multi_gpu",
     ],
