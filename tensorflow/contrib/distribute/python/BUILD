@@ -373,6 +373,22 @@ py_library(
     ],
 )
 
+py_library(
+    name = "step_fn_test_lib",
+    testonly = 1,
+    srcs = ["step_fn_test.py"],
+    deps = [
+        ":combinations",
+        ":single_loss_example",
+        "//tensorflow/contrib/tpu:tpu_lib",
+        "//tensorflow/python:variables",
+        "//tensorflow/python/eager:context",
+        "//tensorflow/python/eager:test",
+        "//third_party/py/numpy",
+        "@absl_py//absl/testing:parameterized",
+    ],
+)
+
 gpu_py_test(
     name = "step_fn_test",
     srcs = ["step_fn_test.py"],
