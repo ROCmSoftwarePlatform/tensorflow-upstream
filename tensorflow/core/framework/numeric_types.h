@@ -16,6 +16,11 @@ limitations under the License.
 #ifndef TENSORFLOW_FRAMEWORK_NUMERIC_TYPES_H_
 #define TENSORFLOW_FRAMEWORK_NUMERIC_TYPES_H_
 
+#ifdef __HIPCC__
+// Need to include hip_runtime.h before <complex> for supporting std::complex
+// with hip-clang.
+#include <hip/hip_runtime.h>
+#endif
 #include <complex>
 #include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 // Disable clang-format to prevent 'FixedPoint' header from being included

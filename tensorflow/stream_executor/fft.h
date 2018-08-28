@@ -44,6 +44,11 @@ limitations under the License.
 #ifndef TENSORFLOW_STREAM_EXECUTOR_FFT_H_
 #define TENSORFLOW_STREAM_EXECUTOR_FFT_H_
 
+#ifdef __HIPCC__
+// Need to include hip_runtime.h before <complex> for supporting std::complex
+// with hip-clang.
+#include <hip/hip_runtime.h>
+#endif
 #include <complex>
 #include <memory>
 #include "tensorflow/stream_executor/platform/port.h"

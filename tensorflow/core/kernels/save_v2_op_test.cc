@@ -13,6 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#ifdef __HIPCC__
+// Need to include hip_runtime.h before <complex> for supporting std::complex
+// with hip-clang.
+#include <hip/hip_runtime.h>
+#endif
 #include <complex>
 #include <string>
 

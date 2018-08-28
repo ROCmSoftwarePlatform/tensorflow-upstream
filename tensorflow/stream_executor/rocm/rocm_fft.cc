@@ -15,6 +15,11 @@ limitations under the License.
 
 #include "tensorflow/stream_executor/rocm/rocm_fft.h"
 
+#ifdef __HIPCC__
+// Need to include hip_runtime.h before <complex> for supporting std::complex
+// with hip-clang.
+#include <hip/hip_runtime.h>
+#endif
 #include <complex>
 
 #include "tensorflow/stream_executor/rocm/rocm_activation.h"

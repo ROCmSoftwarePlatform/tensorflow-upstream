@@ -16,6 +16,10 @@ limitations under the License.
 #ifndef TENSORFLOW_CORE_LIB_BFLOAT16_BFLOAT16_H_
 #define TENSORFLOW_CORE_LIB_BFLOAT16_BFLOAT16_H_
 
+#ifdef __HIPCC__
+#include <hip/hip_runtime.h>
+#endif
+
 #include <cmath>
 #include <complex>
 
