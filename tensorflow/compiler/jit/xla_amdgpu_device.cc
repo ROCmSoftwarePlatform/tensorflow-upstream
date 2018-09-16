@@ -1,4 +1,4 @@
-/* Copyright 2017 The TensorFlow Authors. All Rights Reserved.
+/* Copyright 2018 The TensorFlow Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-// Registers the XLA_GPU device, which is an XlaDevice instantiation that runs
-// operators using XLA via the XLA "CUDA" (GPU) backend.
+// Registers the XLA_AMDGPU device, which is an XlaDevice instantiation that
+// runs operators using XLA via the XLA "ROCM" (GPU) backend.
 
 #include "tensorflow/compiler/jit/kernels/xla_launch_op.h"
 #include "tensorflow/compiler/jit/xla_device.h"
@@ -25,28 +25,28 @@ limitations under the License.
 
 namespace tensorflow {
 
-class XlaGpuDeviceFactory : public DeviceFactory {
+class XlaAMDGpuDeviceFactory : public DeviceFactory {
  public:
   Status CreateDevices(const SessionOptions& options, const string& name_prefix,
                        std::vector<Device*>* devices) override;
 };
 
-Status XlaGpuDeviceFactory::CreateDevices(const SessionOptions& options,
+Status XlaAMDGpuDeviceFactory::CreateDevices(const SessionOptions& options,
                                           const string& name_prefix,
                                           std::vector<Device*>* devices) {
   XlaOpRegistry::DeviceRegistration registration;
-  registration.compilation_device_name = DEVICE_GPU_XLA_JIT;
+  registration.compilation_device_name = DEVICE_AMDGPU_XLA_JIT;
   registration.requires_compilation = true;
   registration.enable_jit_by_default = false;
   registration.compile_resource_ops = true;
 
   static XlaDeviceOpRegistrations* registrations =
-      RegisterXlaDeviceKernels(DEVICE_XLA_GPU, DEVICE_GPU_XLA_JIT);
+      RegisterXlaDeviceKernels(DEVICE_XLA_AMDGPU, DEVICE_AMDGPU_XLA_JIT);
   (void)registrations;
 
   std::unique_ptr<XlaDevice> device;
   Status status =
-      XlaDevice::Create("CUDA", DEVICE_XLA_GPU, 0, DEVICE_GPU_XLA_JIT, options,
+      XlaDevice::Create("ROCM", DEVICE_XLA_AMDGPU, 0, DEVICE_AMDGPU_XLA_JIT, options,
                         name_prefix, registration,
                         /*transfer_as_literal=*/false,
                         /*use_multiple_streams=*/false,
@@ -54,14 +54,14 @@ Status XlaGpuDeviceFactory::CreateDevices(const SessionOptions& options,
                         /*padded_shape_fn=*/{}, &device);
   if (!status.ok()) {
     // Treat failures as non-fatal; there might not be a GPU in the machine.
-    VLOG(1) << "Failed to create XLA_GPU device: " << status;
+    VLOG(1) << "Failed to create XLA_AMDGPU device: " << status;
     return Status::OK();
   }
 
   // TODO(b/78468222): Uncomment after fixing this bug
-  // status = device->UseGpuDeviceInfo();
+  // status = device->CreateAndSetGpuDeviceInfo();
   // if (!status.ok()) {
-  //  errors::AppendToMessage(&status, "while setting up ", DEVICE_GPU_XLA_JIT,
+  //  errors::AppendToMessage(&status, "while setting up ", DEVICE_AMDGPU_XLA_JIT,
   //                          " device");
   //  return status;
   // }
@@ -70,15 +70,14 @@ Status XlaGpuDeviceFactory::CreateDevices(const SessionOptions& options,
   return Status::OK();
 }
 
-REGISTER_LOCAL_DEVICE_FACTORY(DEVICE_XLA_GPU, XlaGpuDeviceFactory);
+REGISTER_LOCAL_DEVICE_FACTORY(DEVICE_XLA_AMDGPU, XlaAMDGpuDeviceFactory);
 
 // Kernel registrations
 
-constexpr std::array<DataType, 8> kAllXlaGpuTypes = {
-    {DT_INT32, DT_INT64, DT_HALF, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_BOOL,
-     DT_BFLOAT16}};
+constexpr std::array<DataType, 8> kAllXlaAMDGpuTypes = {
+    {DT_INT32, DT_INT64, DT_HALF, DT_FLOAT, DT_DOUBLE, DT_BOOL}};
 
-REGISTER_XLA_LAUNCH_KERNEL(DEVICE_XLA_GPU, XlaLocalLaunchOp, kAllXlaGpuTypes);
-REGISTER_XLA_DEVICE_KERNELS(DEVICE_XLA_GPU, kAllXlaGpuTypes);
+REGISTER_XLA_LAUNCH_KERNEL(DEVICE_XLA_AMDGPU, XlaLocalLaunchOp, kAllXlaAMDGpuTypes);
+REGISTER_XLA_DEVICE_KERNELS(DEVICE_XLA_AMDGPU, kAllXlaAMDGpuTypes);
 
 }  // namespace tensorflow

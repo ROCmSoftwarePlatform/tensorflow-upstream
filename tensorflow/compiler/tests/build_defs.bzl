@@ -1,12 +1,15 @@
 """Build rules for Tensorflow/XLA testing."""
 
 load("@local_config_cuda//cuda:build_defs.bzl", "cuda_is_configured")
+load("@local_config_rocm//rocm:build_defs.bzl", "rocm_is_configured")
 load("//tensorflow/compiler/tests:plugin.bzl", "plugins")
 
 def all_backends():
   b = ["cpu"] + plugins.keys()
   if cuda_is_configured():
     return b + ["gpu"]
+  elif rocm_is_configured():
+    return b + ["rocm"]
   else:
     return b
 
@@ -59,6 +62,11 @@ def tf_xla_py_test(name, srcs=[], deps=[], tags=[], data=[], main=None,
           "--types=DT_HALF,DT_FLOAT,DT_DOUBLE,DT_INT32,DT_INT64,DT_BOOL,DT_COMPLEX64,DT_BFLOAT16"
       ]
       backend_tags += ["requires-gpu-sm35"]
+    elif backend == "rocm":
+      backend_args += [
+          "--test_device=XLA_AMDGPU",
+          "--types=DT_HALF,DT_FLOAT,DT_DOUBLE,DT_INT32,DT_INT64,DT_BOOL"
+      ]
     elif backend in plugins:
       backend_args += ["--test_device=" + plugins[backend]["device"],
                        "--types=" + plugins[backend]["types"]]

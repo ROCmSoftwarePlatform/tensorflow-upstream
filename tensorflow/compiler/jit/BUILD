@@ -44,7 +44,7 @@ cc_library(
         ":xla_gpu_device",
         ":xla_gpu_jit",
     ]) + if_rocm_is_configured([
-        ":xla_gpu_device",
+        ":xla_amdgpu_device",
         ":xla_gpu_jit",
     ]),
     alwayslink = 1,
@@ -100,6 +100,23 @@ cc_library(
 cc_library(
     name = "xla_gpu_device",
     srcs = ["xla_gpu_device.cc"],
+    visibility = [":friends"],
+    deps = [
+        ":jit_compilation_passes",
+        ":xla_device",
+        "//tensorflow/compiler/jit/kernels:xla_launch_op",
+        "//tensorflow/compiler/tf2xla:xla_compiler",
+        "//tensorflow/compiler/tf2xla/kernels:xla_ops",
+        "//tensorflow/compiler/xla/service:gpu_plugin",  # buildcleaner: keep
+        "//tensorflow/core:core_cpu_internal",
+        "//tensorflow/core:lib",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "xla_amdgpu_device",
+    srcs = ["xla_amdgpu_device.cc"],
     visibility = [":friends"],
     deps = [
         ":jit_compilation_passes",
@@ -615,7 +632,10 @@ cc_header_only_library(
     deps = [
         ":xla_cpu_device",
         ":xla_cpu_jit",
-        ":xla_gpu_device",
         ":xla_gpu_jit",
-    ],
+    ] + if_cuda_is_configured([
+        ":xla_gpu_device",
+    ]) + if_rocm_is_configured([
+        ":xla_amdgpu_device",
+    ]),
 )
