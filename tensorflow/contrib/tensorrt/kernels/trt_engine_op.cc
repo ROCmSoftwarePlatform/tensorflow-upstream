@@ -391,7 +391,7 @@ void TRTEngineOp::ComputeAsync(tensorflow::OpKernelContext* ctx,
       reinterpret_cast<const cudaStream_t*>(ctx->op_device_context()
                                                 ->stream()
                                                 ->implementation()
-                                                ->CudaStreamMemberHack()));
+                                                ->GPUStreamMemberHack()));
 
   // TODO(jie): trt enqueue does not return error
   auto& trt_execution_context_ptr = engine_ctx_pair.second;

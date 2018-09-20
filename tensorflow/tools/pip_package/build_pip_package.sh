@@ -187,6 +187,7 @@ function main() {
   PKG_NAME_FLAG=""
   PROJECT_NAME=""
   GPU_BUILD=0
+  ROCM_BUILD=0
   NIGHTLY_BUILD=0
   SRCDIR=""
   DSTDIR=""
@@ -201,6 +202,8 @@ function main() {
       GPU_BUILD=1
     elif [[ "$1" == "--gpudirect" ]]; then
       PKG_NAME_FLAG="--project_name tensorflow_gpudirect"
+    elif [[ "$1" == "--rocm" ]]; then
+      ROCM_BUILD=1 
     elif [[ "$1" == "--project_name" ]]; then
       shift
       if [[ -z "$1" ]]; then
@@ -246,10 +249,14 @@ function main() {
     PKG_NAME_FLAG="--project_name ${PROJECT_NAME}"
   elif [[ ${NIGHTLY_BUILD} == "1" && ${GPU_BUILD} == "1" ]]; then
     PKG_NAME_FLAG="--project_name tf_nightly_gpu"
+  elif [[ ${NIGHTLY_BUILD} == "1" && ${ROCM_BUILD} == "1" ]]; then
+    PKG_NAME_FLAG="--project_name tf_nightly_rocm"
   elif [[ ${NIGHTLY_BUILD} == "1" ]]; then
     PKG_NAME_FLAG="--project_name tf_nightly"
   elif [[ ${GPU_BUILD} == "1" ]]; then
     PKG_NAME_FLAG="--project_name tensorflow_gpu"
+  elif [[ ${ROCM_BUILD} == "1" ]]; then
+    PKG_NAME_FLAG="--project_name tensorflow_rocm"
   fi
 
   build_wheel "$SRCDIR" "$DSTDIR" "$PKG_NAME_FLAG"

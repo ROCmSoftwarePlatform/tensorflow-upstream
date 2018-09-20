@@ -21,8 +21,13 @@ limitations under the License.
 
 #include "llvm/IR/DataLayout.h"
 #include "tensorflow/compiler/xla/literal.h"
+// XXX figure out how to cope with both platforms
+#if TENSORFLOW_USE_ROCM
+#include "tensorflow/compiler/xla/service/gpu/amdgpu_compiler.h"
+#else
+#include "tensorflow/compiler/xla/service/gpu/nvptx_compiler.h"
+#endif
 #include "tensorflow/compiler/xla/literal_util.h"
-#include "tensorflow/compiler/xla/service/gpu/gpu_compiler.h"
 #include "tensorflow/compiler/xla/service/gpu/outfeed_manager.h"
 #include "tensorflow/compiler/xla/shape_util.h"
 #include "tensorflow/compiler/xla/status_macros.h"
@@ -41,11 +46,14 @@ namespace gpu {
 // TODO(b/30467474) Once GPU infeed implementation settles, consider
 // folding back the cpu and gpu infeed implementations into a generic
 // one if possible.
-GpuTransferManager::GpuTransferManager()
+GpuTransferManager::GpuTransferManager(se::Platform::Id id)
     : GenericTransferManager(
-          se::cuda::kCudaPlatformId,
-          /*pointer_size=*/llvm::DataLayout(gpu::GpuCompiler::kDataLayout)
-              .getPointerSize(0 /* default address space */)) {}
+          id,
+#if TENSORFLOW_USE_ROCM
+          llvm::DataLayout(gpu::AMDGPUCompiler::kDataLayout).getPointerSize(0)){}
+#else
+          llvm::DataLayout(gpu::NVPTXCompiler::kDataLayout).getPointerSize(0)){}
+#endif
 
 Status GpuTransferManager::TransferLiteralToInfeed(
     se::StreamExecutor* executor, const LiteralSlice& literal) {
@@ -179,13 +187,20 @@ Status GpuTransferManager::TransferLiteralFromOutfeed(
 }  // namespace gpu
 }  // namespace xla
 
-static std::unique_ptr<xla::TransferManager> CreateGpuTransferManager() {
-  return xla::MakeUnique<xla::gpu::GpuTransferManager>();
+static std::unique_ptr<xla::TransferManager> CreateNVGpuTransferManager() {
+  //return xla::MakeUnique<xla::GpuTransferManager>(
+      //stream_executor::cuda::kCudaPlatformId);
+}
+
+static std::unique_ptr<xla::TransferManager> CreateAMDGpuTransferManager() {
+  //return xla::MakeUnique<xla::GpuTransferManager>(
+  //    stream_executor::rocm::kROCmPlatformId);
 }
 
 static bool InitModule() {
+  // XXX figure out how to support both AMDGPU and NVPTX at the same time
   xla::TransferManager::RegisterTransferManager(
-      stream_executor::cuda::kCudaPlatformId, &CreateGpuTransferManager);
+      stream_executor::rocm::kROCmPlatformId, &CreateAMDGpuTransferManager);
   return true;
 }
 static bool module_initialized = InitModule();

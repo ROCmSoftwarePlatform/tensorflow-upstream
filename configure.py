@@ -486,7 +486,7 @@ def set_cc_opt_flags(environ_cp):
   elif is_windows():
     default_cc_opt_flags = '/arch:AVX'
   else:
-    default_cc_opt_flags = '-march=native'
+    default_cc_opt_flags = '-march=haswell' # ROCm supports Haswell or later architecture
   question = ('Please specify optimization flags to use during compilation when'
               ' bazel option "--config=opt" is specified [Default is %s]: '
              ) % default_cc_opt_flags
@@ -1236,13 +1236,28 @@ def set_tf_cuda_compute_capabilities(environ_cp):
 
 def set_other_cuda_vars(environ_cp):
   """Set other CUDA related variables."""
-  # If CUDA is enabled, always use GPU during build and test.
-  if environ_cp.get('TF_CUDA_CLANG') == '1':
-    write_to_bazelrc('build --config=cuda_clang')
-    write_to_bazelrc('test --config=cuda_clang')
+  if is_windows():
+    # The following three variables are needed for MSVC toolchain configuration
+    # in Bazel
+    environ_cp['CUDA_PATH'] = environ_cp.get('CUDA_TOOLKIT_PATH')
+    environ_cp['CUDA_COMPUTE_CAPABILITIES'] = environ_cp.get(
+        'TF_CUDA_COMPUTE_CAPABILITIES')
+    environ_cp['NO_WHOLE_ARCHIVE_OPTION'] = 1
+    write_action_env_to_bazelrc('CUDA_PATH', environ_cp.get('CUDA_PATH'))
+    write_action_env_to_bazelrc('CUDA_COMPUTE_CAPABILITIE',
+                                environ_cp.get('CUDA_COMPUTE_CAPABILITIE'))
+    write_action_env_to_bazelrc('NO_WHOLE_ARCHIVE_OPTION',
+                                environ_cp.get('NO_WHOLE_ARCHIVE_OPTION'))
+    write_to_bazelrc('build --config=win-cuda')
+    write_to_bazelrc('test --config=win-cuda')
   else:
-    write_to_bazelrc('build --config=cuda')
-    write_to_bazelrc('test --config=cuda')
+    # If CUDA is enabled, always use GPU during build and test.
+    if environ_cp.get('TF_CUDA_CLANG') == '1':
+      write_to_bazelrc('build --config=cuda_clang')
+      write_to_bazelrc('test --config=cuda_clang')
+    else:
+      write_to_bazelrc('build --config=cuda')
+      write_to_bazelrc('test --config=cuda')
 
 
 def set_host_cxx_compiler(environ_cp):
@@ -1461,16 +1476,18 @@ def main():
 
   set_build_var(environ_cp, 'TF_NEED_JEMALLOC', 'jemalloc as malloc',
                 'with_jemalloc', True)
+  # ROCM TODO: restore these flags to default ones after we get a successful
+  # build
   set_build_var(environ_cp, 'TF_NEED_GCP', 'Google Cloud Platform',
-                'with_gcp_support', True, 'gcp')
+                'with_gcp_support', False, 'gcp')
   set_build_var(environ_cp, 'TF_NEED_HDFS', 'Hadoop File System',
-                'with_hdfs_support', True, 'hdfs')
+                'with_hdfs_support', False, 'hdfs')
   set_build_var(environ_cp, 'TF_NEED_AWS', 'Amazon AWS Platform',
-                'with_aws_support', True, 'aws')
+                'with_aws_support', False, 'aws')
   set_build_var(environ_cp, 'TF_NEED_KAFKA', 'Apache Kafka Platform',
-                'with_kafka_support', True, 'kafka')
+                'with_kafka_support', False, 'kafka')
   set_build_var(environ_cp, 'TF_ENABLE_XLA', 'XLA JIT', 'with_xla_support',
-                False, 'xla')
+                True, 'xla')
   set_build_var(environ_cp, 'TF_NEED_GDR', 'GDR', 'with_gdr_support',
                 False, 'gdr')
   set_build_var(environ_cp, 'TF_NEED_VERBS', 'VERBS', 'with_verbs_support',
@@ -1485,6 +1502,13 @@ def main():
       set_computecpp_toolkit_path(environ_cp)
     else:
       set_trisycl_include_dir(environ_cp)
+
+  set_action_env_var(environ_cp, 'TF_NEED_ROCM', 'ROCm', False)
+  if (environ_cp.get('TF_NEED_ROCM') == '1' and
+      'LD_LIBRARY_PATH' in environ_cp and environ_cp.get(
+      'LD_LIBRARY_PATH') != '1'):
+      write_action_env_to_bazelrc('LD_LIBRARY_PATH',
+                                  environ_cp.get('LD_LIBRARY_PATH'))
 
   set_action_env_var(environ_cp, 'TF_NEED_CUDA', 'CUDA', False)
   if (environ_cp.get('TF_NEED_CUDA') == '1' and
@@ -1521,6 +1545,19 @@ def main():
     if environ_cp.get('TF_DOWNLOAD_CLANG') == '1':
       write_to_bazelrc('build --config=download_clang')
       write_to_bazelrc('test --config=download_clang')
+
+  # SYCL / ROCm / CUDA are mutually exclusive.
+  # At most 1 GPU platform can be configured.
+  gpu_platform_count = 0
+  if environ_cp.get('TF_NEED_OPENCL_SYCL') == '1':
+    gpu_platform_count += 1
+  if environ_cp.get('TF_NEED_ROCM') == '1':
+    gpu_platform_count += 1
+  if environ_cp.get('TF_NEED_CUDA') == '1':
+    gpu_platform_count += 1
+  if gpu_platform_count >= 2:
+    raise UserInputError('SYCL / CUDA / ROCm are mututally exclusive. '
+                         'At most 1 GPU platform can be configured.')
 
   set_build_var(environ_cp, 'TF_NEED_MPI', 'MPI', 'with_mpi_support', False)
   if environ_cp.get('TF_NEED_MPI') == '1':

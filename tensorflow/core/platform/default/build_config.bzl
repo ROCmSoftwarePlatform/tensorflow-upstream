@@ -6,6 +6,7 @@ load("//tensorflow:tensorflow.bzl", "if_windows")
 load("//tensorflow:tensorflow.bzl", "if_not_windows")
 load("//tensorflow/core:platform/default/build_config_root.bzl", "if_static")
 load("@local_config_cuda//cuda:build_defs.bzl", "if_cuda")
+load("@local_config_rocm//rocm:build_defs.bzl", "if_rocm")
 load(
     "//third_party/mkl:build_defs.bzl",
     "if_mkl",
@@ -563,6 +564,15 @@ def tf_additional_libdevice_deps():
 
 def tf_additional_libdevice_srcs():
   return ["platform/default/cuda_libdevice_path.cc"]
+
+def tf_additional_rocdl_data():
+  return []
+
+def tf_additional_rocdl_deps():
+  return ["@local_config_rocm//rocm:rocm_headers"]
+
+def tf_additional_rocdl_srcs():
+  return ["platform/default/rocm_rocdl_path.cc"]
 
 def tf_additional_test_deps():
   return []

@@ -1,10 +1,10 @@
 load(
     "//tensorflow:tensorflow.bzl",
     "tf_copts",
-    "tf_cuda_library",
+    "tf_gpu_library",
 )
 
-tf_cuda_library(
+tf_gpu_library(
     name = "cupti_wrapper",
     srcs = [
         "cupti_wrapper.cc",
@@ -13,7 +13,7 @@ tf_cuda_library(
         "cupti_wrapper.h",
     ],
     copts = tf_copts(),
-    cuda_deps = [
+    gpu_deps = [
         "//tensorflow/core:stream_executor",
         "@local_config_cuda//cuda:cupti_headers",
     ],

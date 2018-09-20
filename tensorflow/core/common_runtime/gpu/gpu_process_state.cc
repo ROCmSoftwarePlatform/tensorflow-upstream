@@ -18,7 +18,7 @@ limitations under the License.
 #include <cstring>
 #include <vector>
 
-#include "tensorflow/core/common_runtime/gpu/cuda_host_allocator.h"
+#include "tensorflow/core/common_runtime/gpu/gpu_host_allocator.h"
 #include "tensorflow/core/common_runtime/gpu/gpu_bfc_allocator.h"
 #include "tensorflow/core/common_runtime/gpu/gpu_cudamalloc_allocator.h"
 #include "tensorflow/core/common_runtime/gpu/gpu_debug_allocator.h"
@@ -82,11 +82,12 @@ GPUProcessState::~GPUProcessState() {
   instance_ = nullptr;
 }
 
+
 Allocator* GPUProcessState::GetGPUAllocator(const GPUOptions& options,
                                             TfGpuId tf_gpu_id,
                                             size_t total_bytes) {
   CHECK(process_state_);
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
   const string& allocator_type = options.allocator_type();
   mutex_lock lock(mu_);
   GpuIdUtil::CheckValidTfGpuId(tf_gpu_id);
@@ -106,22 +107,23 @@ Allocator* GPUProcessState::GetGPUAllocator(const GPUOptions& options,
       return nullptr;
     }
 
-    CudaGpuId cuda_gpu_id;
-    TF_CHECK_OK(GpuIdManager::TfToCudaGpuId(tf_gpu_id, &cuda_gpu_id));
+    PlatformGpuId platform_gpu_id;
+    TF_CHECK_OK(GpuIdManager::TfToPlatformGpuId(tf_gpu_id, &platform_gpu_id));
     gpu_allocator =
-        new GPUBFCAllocator(cuda_gpu_id, total_bytes, options,
+        new GPUBFCAllocator(platform_gpu_id, total_bytes, options,
                             strings::StrCat("GPU_", tf_gpu_id.value(), "_bfc"));
 
     // If true, checks for memory overwrites by writing
     // distinctive patterns on both ends of allocated memory.
     if (useCudaMemoryGuardAllocator()) {
-      gpu_allocator = new GPUDebugAllocator(gpu_allocator, cuda_gpu_id);
-      gpu_allocator = new GPUNanResetAllocator(gpu_allocator, cuda_gpu_id);
+      gpu_allocator = new GPUDebugAllocator(gpu_allocator, platform_gpu_id);
+      gpu_allocator = new GPUNanResetAllocator(gpu_allocator, platform_gpu_id);
     } else if (useCudaMallocAllocator()) {
       // If true, passes all allocation requests through to cudaMalloc
       // useful for doing memory debugging with tools like cuda-memcheck
       // **WARNING** probably will not work in a multi-gpu scenario
-      gpu_allocator = new GPUcudaMallocAllocator(gpu_allocator, cuda_gpu_id);
+      gpu_allocator =
+          new GPUcudaMallocAllocator(gpu_allocator, platform_gpu_id);
     }
     gpu_allocators_[tf_gpu_id.value()] = gpu_allocator;
 
@@ -138,7 +140,7 @@ Allocator* GPUProcessState::GetGPUAllocator(const GPUOptions& options,
     if (process_state_->ProcessState::FLAGS_brain_gpu_record_mem_types) {
       ProcessState::MemDesc md;
       md.loc = ProcessState::MemDesc::GPU;
-      md.dev_index = cuda_gpu_id.value();
+      md.dev_index = platform_gpu_id.value();
       md.gpu_registered = false;
       md.nic_registered = true;
       if (static_cast<int64>(gpu_al_.size()) <= tf_gpu_id.value()) {
@@ -152,36 +154,37 @@ Allocator* GPUProcessState::GetGPUAllocator(const GPUOptions& options,
     return gpu_al_[tf_gpu_id.value()];
   return gpu_allocators_[tf_gpu_id.value()];
 #else
-  LOG(FATAL) << "GPUAllocator unavailable. Not compiled with --config=cuda.";
+  LOG(FATAL) << "GPUAllocator unavailable. Not compiled with --config=cuda or --config=rocm.";
   return nullptr;
-#endif  // GOOGLE_CUDA
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 }
 
-Allocator* GPUProcessState::GetCUDAHostAllocator(int numa_node) {
+Allocator* GPUProcessState::GetGPUHostAllocator(int numa_node) {
   CHECK(process_state_);
   if (!HasGPUDevice() ||
-      !process_state_->ProcessState::FLAGS_brain_mem_reg_cuda_dma) {
+      !process_state_->ProcessState::FLAGS_brain_mem_reg_gpu_dma) {
     return process_state_->GetCPUAllocator(numa_node);
   }
+
   CHECK_GE(numa_node, 0);
   {
-    // Here we optimize the most common use case where cuda_host_allocators_
-    // and cuda_al_ have already been populated and since we're only reading
+    // Here we optimize the most common use case where gpu_host_allocators_
+    // and gpu_host_al_ have already been populated and since we're only reading
     // these vectors, we can get by with a shared lock. In the slower case,
     // we take a unique lock and populate these vectors.
     tf_shared_lock lock(mu_);
 
     if (process_state_->ProcessState::FLAGS_brain_gpu_record_mem_types &&
-        static_cast<int>(cuda_al_.size()) > 0) {
-      return cuda_al_[0];
+        static_cast<int>(gpu_host_al_.size()) > 0) {
+      return gpu_host_al_[0];
     }
-    if (static_cast<int>(cuda_host_allocators_.size()) > numa_node) {
-      return cuda_host_allocators_[0];
+    if (static_cast<int>(gpu_host_allocators_.size()) > numa_node) {
+      return gpu_host_allocators_[0];
     }
   }
 
   mutex_lock lock(mu_);
-  // Find the first valid StreamExecutor to request CUDA host memory
+  // Find the first valid StreamExecutor to request CUDA or ROCm host memory
   // through, since any will work.
   //
   // This search isn't super clean, and it would be nice to use a
@@ -198,46 +201,46 @@ Allocator* GPUProcessState::GetCUDAHostAllocator(int numa_node) {
 
   CHECK_NE(nullptr, se);
 
-  while (static_cast<int>(cuda_host_allocators_.size()) <= numa_node) {
+  while (static_cast<int>(gpu_host_allocators_.size()) <= numa_node) {
     // TODO(zheng-xq): evaluate whether 64GB by default is the best choice.
-    int64 cuda_host_mem_limit_in_mb = -1;
+    int64 gpu_host_mem_limit_in_mb = -1;
     Status status = ReadInt64FromEnvVar("TF_CUDA_HOST_MEM_LIMIT_IN_MB",
                                         1LL << 16 /*64GB max by default*/,
-                                        &cuda_host_mem_limit_in_mb);
+                                        &gpu_host_mem_limit_in_mb);
     if (!status.ok()) {
-      LOG(ERROR) << "GetCUDAHostAllocator: " << status.error_message();
+      LOG(ERROR) << "GetGPUHostAllocator: " << status.error_message();
     }
-    int64 cuda_host_mem_limit = cuda_host_mem_limit_in_mb * (1LL << 20);
+    int64 gpu_host_mem_limit = gpu_host_mem_limit_in_mb * (1LL << 20);
     VisitableAllocator* allocator =
-        new BFCAllocator(new CUDAHostAllocator(se), cuda_host_mem_limit,
-                         true /*allow_growth*/, "cuda_host_bfc" /*name*/);
+        new BFCAllocator(new GPUHostAllocator(se), gpu_host_mem_limit,
+                         true /*allow_growth*/, "gpu_host_bfc" /*name*/);
 
     if (LogMemory::IsEnabled()) {
       // Wrap the allocator to track allocation ids for better logging
       // at the cost of performance.
       allocator = new TrackingVisitableAllocator(allocator, true);
     }
-    cuda_host_allocators_.push_back(allocator);
+    gpu_host_allocators_.push_back(allocator);
     if (process_state_->ProcessState::FLAGS_brain_gpu_record_mem_types) {
       ProcessState::MemDesc md;
       md.loc = ProcessState::MemDesc::CPU;
       md.dev_index = 0;
       md.gpu_registered = true;
       md.nic_registered = false;
-      cuda_al_.push_back(new internal::RecordingAllocator(
-          &process_state_->mem_desc_map_, cuda_host_allocators_.back(), md,
+      gpu_host_al_.push_back(new internal::RecordingAllocator(
+          &process_state_->mem_desc_map_, gpu_host_allocators_.back(), md,
           &mu_));
     }
   }
   if (process_state_->ProcessState::FLAGS_brain_gpu_record_mem_types)
-    return cuda_al_[0];
-  return cuda_host_allocators_[0];
+    return gpu_host_al_[0];
+  return gpu_host_allocators_[0];
 }
 
 void GPUProcessState::AddGPUAllocVisitor(int bus_id,
                                          const AllocVisitor& visitor) {
   CHECK(process_state_);
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
   mutex_lock lock(mu_);
   for (int i = 0; i < static_cast<int64>(gpu_allocators_.size()); ++i) {
     se::StreamExecutor* se =
@@ -251,7 +254,7 @@ void GPUProcessState::AddGPUAllocVisitor(int bus_id,
     gpu_visitors_.push_back(std::vector<AllocVisitor>());
   }
   gpu_visitors_[bus_id].push_back(visitor);
-#endif  // GOOGLE_CUDA
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 }
 
 void GPUProcessState::TestOnlyReset() {
@@ -261,9 +264,9 @@ void GPUProcessState::TestOnlyReset() {
     gpu_device_enabled_ = false;
     gpu_visitors_.clear();
     gtl::STLDeleteElements(&gpu_allocators_);
-    gtl::STLDeleteElements(&cuda_host_allocators_);
+    gtl::STLDeleteElements(&gpu_host_allocators_);
     gtl::STLDeleteElements(&gpu_al_);
-    gtl::STLDeleteElements(&cuda_al_);
+    gtl::STLDeleteElements(&gpu_host_al_);
   }
 }
 
