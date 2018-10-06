@@ -43,10 +43,10 @@ limitations under the License.
 #include "tensorflow/core/util/use_cudnn.h"
 #include "tensorflow/core/util/work_sharder.h"
 
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 #include "tensorflow/core/kernels/conv_ops_gpu.h"
 #include "tensorflow/core/platform/stream_executor.h"
-#endif  // GOOGLE_CUDA
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 
 namespace {
 
@@ -602,7 +602,7 @@ template struct LaunchConv2DBackpropInputOp<CPUDevice, float>;
 template struct LaunchConv2DBackpropInputOp<CPUDevice, double>;
 
 // GPU definitions.
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 // The slow version (but compiles for GPU)
 
 // A dummy type to group forward backward data autotune results together.
@@ -946,10 +946,10 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
       AsDeviceMemory(pre_transformed_in_backprop.template flat<T>().data(),
                      pre_transformed_in_backprop.template flat<T>().size());
 
-  static int64 ConvolveBackwardDataScratchSize = GetCudnnWorkspaceLimit(
+  static int64 ConvolveBackwardDataScratchSize = GetDnnWorkspaceLimit(
       "TF_CUDNN_WORKSPACE_LIMIT_IN_MB", 1LL << 32  // 4GB by default
   );
-  CudnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize, ctx);
+  DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize, ctx);
   int device_id = stream->parent()->device_ordinal();
   DataType dtype = out_backprop.dtype();
   ConvParameters conv_parameters = {
@@ -974,6 +974,7 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
   AlgorithmConfig algorithm_config;
   if (cudnn_use_autotune && !AutoTuneConvBwdData::GetInstance()->Find(
                                 conv_parameters, &algorithm_config)) {
+#if GOOGLE_CUDA
     std::vector<AlgorithmDesc> algorithms;
     CHECK(stream->parent()->GetConvolveBackwardDataAlgorithms(
         conv_parameters.ShouldIncludeWinogradNonfusedAlgo<T>(stream->parent()),
@@ -983,7 +984,7 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
     for (auto profile_algorithm : algorithms) {
       // TODO(zhengxq): profile each algorithm multiple times to better
       // accuracy.
-      CudnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize,
+      DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize,
                                               ctx);
       ProfileResult profile_result;
       bool cudnn_launch_status =
@@ -1017,6 +1018,29 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
       algorithm_config.set_algorithm_no_scratch(
           best_result_no_scratch.algorithm());
     }
+#elif TENSORFLOW_USE_ROCM
+    LOG(INFO) << "running auto-tune for Backward-Data";
+    ProfileResult profile_result;
+    // MIOpen has its own Find and autotuner so use it here, passing
+    // default AlgorithmConfig to force a search
+    DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize,
+                                              ctx);
+    bool miopen_find_status =
+      stream
+          ->ThenConvolveBackwardDataWithAlgorithm(
+              filter_desc, filter_ptr, output_desc, out_backprop_ptr,
+              conv_desc, input_desc, &in_backprop_ptr, &scratch_allocator,
+              AlgorithmConfig(), &profile_result)
+          .ok();
+    OP_REQUIRES(ctx, miopen_find_status && profile_result.is_valid() &&
+                           !profile_result.algorithm().is_default(),
+                errors::NotFound("Failed to find backwards-data algorithm!"));
+
+
+    algorithm_config.set_algorithm(profile_result.algorithm());
+    // TODO - Add support for no-scratch algorithm
+    algorithm_config.set_algorithm_no_scratch(AlgorithmDesc());
+#endif
     AutoTuneConvBwdData::GetInstance()->Insert(conv_parameters,
                                                algorithm_config);
   }
@@ -1134,6 +1158,6 @@ template struct LaunchConv2DBackpropInputOp<GPUDevice, float>;
 template struct LaunchConv2DBackpropInputOp<GPUDevice, Eigen::half>;
 template struct LaunchConv2DBackpropInputOp<GPUDevice, double>;
 
-#endif  // GOOGLE_CUDA
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 
 }  // namespace tensorflow

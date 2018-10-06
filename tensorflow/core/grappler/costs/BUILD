@@ -1,6 +1,6 @@
 licenses(["notice"])  # Apache 2.0
 
-load("//tensorflow:tensorflow.bzl", "tf_cuda_library", "tf_cc_test")
+load("//tensorflow:tensorflow.bzl", "tf_gpu_library", "tf_cc_test")
 load(
     "//tensorflow/core:platform/default/build_config.bzl",
     "tf_protos_grappler",
@@ -126,11 +126,11 @@ tf_cc_test(
     ],
 )
 
-tf_cuda_library(
+tf_gpu_library(
     name = "utils",
     srcs = ["utils.cc"],
     hdrs = ["utils.h"],
-    cuda_deps = [
+    gpu_deps = [
         "@local_config_cuda//cuda:cudnn_header",
     ],
     visibility = ["//visibility:public"],

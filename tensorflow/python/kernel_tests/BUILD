@@ -7,12 +7,12 @@ package(
 licenses(["notice"])  # Apache 2.0
 
 load("//tensorflow:tensorflow.bzl", "tf_py_test")
-load("//tensorflow:tensorflow.bzl", "cuda_py_test")
+load("//tensorflow:tensorflow.bzl", "gpu_py_test")
 load("//tensorflow:tensorflow.bzl", "sycl_py_test")
 load("//tensorflow:tensorflow.bzl", "tf_custom_op_library")
 
-# CPU only tests should use tf_py_test, GPU tests use cuda_py_test
-# Please avoid the py_tests and cuda_py_tests (plural) while we
+# CPU only tests should use tf_py_test, GPU tests use gpu_py_test
+# Please avoid the py_tests and gpu_py_tests (plural) while we
 # fix the shared/overbroad dependencies.
 
 tf_py_test(
@@ -112,7 +112,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "list_ops_test",
     size = "small",
     srcs = ["list_ops_test.py"],
@@ -129,7 +129,7 @@ cuda_py_test(
     grpc_enabled = True,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "benchmark_test",
     size = "small",
     srcs = ["benchmark_test.py"],
@@ -143,7 +143,7 @@ cuda_py_test(
     tags = ["no_windows"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "reduce_benchmark_test",
     srcs = ["reduce_benchmark_test.py"],
     additional_deps = [
@@ -206,7 +206,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cholesky_op_test",
     size = "medium",
     srcs = ["cholesky_op_test.py"],
@@ -370,7 +370,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "determinant_op_test",
     size = "small",
     srcs = ["determinant_op_test.py"],
@@ -611,7 +611,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "matrix_inverse_op_test",
     size = "small",
     srcs = ["matrix_inverse_op_test.py"],
@@ -624,7 +624,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "matrix_solve_ls_op_test",
     size = "medium",
     srcs = ["matrix_solve_ls_op_test.py"],
@@ -638,7 +638,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "matrix_solve_op_test",
     size = "medium",
     srcs = ["matrix_solve_op_test.py"],
@@ -651,7 +651,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "matrix_triangular_solve_op_test",
     size = "small",
     srcs = ["matrix_triangular_solve_op_test.py"],
@@ -662,7 +662,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "parameterized_truncated_normal_op_test",
     size = "medium",
     srcs = ["parameterized_truncated_normal_op_test.py"],
@@ -745,7 +745,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "resource_variable_ops_test",
     size = "small",
     srcs = ["resource_variable_ops_test.py"],
@@ -799,7 +799,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "scatter_nd_ops_test",
     size = "medium",
     srcs = ["scatter_nd_ops_test.py"],
@@ -1063,7 +1063,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "topk_op_test",
     size = "small",
     srcs = ["topk_op_test.py"],
@@ -1078,7 +1078,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "nth_element_op_test",
     size = "small",
     srcs = ["nth_element_op_test.py"],
@@ -1150,7 +1150,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "where_op_test",
     size = "medium",
     srcs = ["where_op_test.py"],
@@ -1162,7 +1162,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cast_op_test",
     size = "small",
     srcs = ["cast_op_test.py"],
@@ -1183,7 +1183,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "dense_update_ops_no_tsan_test",
     size = "small",
     srcs = ["dense_update_ops_no_tsan_test.py"],
@@ -1198,7 +1198,7 @@ cuda_py_test(
     tags = ["notsan"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "diag_op_test",
     size = "medium",
     srcs = ["diag_op_test.py"],
@@ -1233,7 +1233,7 @@ tf_py_test(
     data = ["//tensorflow/core:lmdb_testdata"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "aggregate_ops_test",
     size = "small",
     srcs = ["aggregate_ops_test.py"],
@@ -1246,7 +1246,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "argmax_op_test",
     size = "small",
     srcs = ["argmax_op_test.py"],
@@ -1257,7 +1257,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "array_ops_test",
     size = "medium",
     srcs = ["array_ops_test.py"],
@@ -1284,7 +1284,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "broadcast_to_ops_test",
     size = "small",
     srcs = ["broadcast_to_ops_test.py"],
@@ -1296,7 +1296,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "inplace_ops_test",
     size = "small",
     srcs = ["inplace_ops_test.py"],
@@ -1312,7 +1312,7 @@ cuda_py_test(
     shard_count = 10,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "batch_matmul_op_test",
     size = "small",
     srcs = ["batch_matmul_op_test.py"],
@@ -1326,7 +1326,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "batchtospace_op_test",
     size = "small",
     srcs = ["batchtospace_op_test.py"],
@@ -1339,7 +1339,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "betainc_op_test",
     size = "small",
     srcs = ["betainc_op_test.py"],
@@ -1353,7 +1353,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "bias_op_test",
     size = "small",
     srcs = ["bias_op_test.py"],
@@ -1368,7 +1368,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "bitcast_op_test",
     size = "small",
     srcs = ["bitcast_op_test.py"],
@@ -1380,7 +1380,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "check_ops_test",
     size = "small",
     srcs = ["check_ops_test.py"],
@@ -1397,7 +1397,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "constant_op_test",
     size = "small",
     srcs = ["constant_op_test.py"],
@@ -1412,7 +1412,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "constant_op_eager_test",
     size = "small",
     srcs = ["constant_op_eager_test.py"],
@@ -1430,7 +1430,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "control_flow_ops_py_test",
     # TODO(b/70473603): change this back to "small" once the C API is
     # permanently enabled
@@ -1482,7 +1482,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv1d_test",
     size = "small",
     srcs = ["conv1d_test.py"],
@@ -1494,7 +1494,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv2d_transpose_test",
     size = "small",
     srcs = ["conv2d_transpose_test.py"],
@@ -1508,7 +1508,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv3d_backprop_filter_v2_grad_test",
     size = "small",
     srcs = ["conv3d_backprop_filter_v2_grad_test.py"],
@@ -1522,7 +1522,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cross_grad_test",
     size = "small",
     srcs = ["cross_grad_test.py"],
@@ -1533,7 +1533,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "denormal_test",
     size = "small",
     srcs = ["denormal_test.py"],
@@ -1546,7 +1546,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "dense_update_ops_test",
     size = "small",
     srcs = ["dense_update_ops_test.py"],
@@ -1561,7 +1561,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "depthtospace_op_test",
     size = "medium",
     srcs = ["depthtospace_op_test.py"],
@@ -1575,7 +1575,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "division_past_test",
     size = "medium",
     srcs = ["division_past_test.py"],
@@ -1587,7 +1587,7 @@ cuda_py_test(
     tags = ["manual"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "dynamic_partition_op_test",
     size = "medium",
     srcs = ["dynamic_partition_op_test.py"],
@@ -1602,7 +1602,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "dynamic_stitch_op_test",
     size = "small",
     srcs = ["dynamic_stitch_op_test.py"],
@@ -1616,7 +1616,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "extract_image_patches_op_test",
     size = "small",
     srcs = ["extract_image_patches_op_test.py"],
@@ -1628,7 +1628,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "functional_ops_test",
     size = "small",
     srcs = ["functional_ops_test.py"],
@@ -1651,7 +1651,7 @@ cuda_py_test(
     tags = ["no_windows"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "gather_nd_op_test",
     size = "small",
     srcs = ["gather_nd_op_test.py"],
@@ -1666,7 +1666,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "gather_op_test",
     size = "medium",
     srcs = ["gather_op_test.py"],
@@ -1679,7 +1679,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "gradient_correctness_test",
     size = "small",
     srcs = ["gradient_correctness_test.py"],
@@ -1692,7 +1692,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "init_ops_test",
     size = "medium",
     srcs = ["init_ops_test.py"],
@@ -1719,7 +1719,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "linalg_ops_test",
     size = "medium",
     srcs = ["linalg_ops_test.py"],
@@ -1735,7 +1735,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "lrn_op_test",
     size = "small",
     srcs = ["lrn_op_test.py"],
@@ -1750,7 +1750,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "manip_ops_test",
     size = "small",
     srcs = ["manip_ops_test.py"],
@@ -1763,7 +1763,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "matmul_op_test",
     size = "medium",
     srcs = ["matmul_op_test.py"],
@@ -1780,7 +1780,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "morphological_ops_test",
     size = "small",
     srcs = ["morphological_ops_test.py"],
@@ -1793,7 +1793,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "numerics_test",
     size = "small",
     srcs = ["numerics_test.py"],
@@ -1808,7 +1808,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "one_hot_op_test",
     size = "small",
     srcs = ["one_hot_op_test.py"],
@@ -1821,7 +1821,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "stack_op_test",
     size = "small",
     srcs = ["stack_op_test.py"],
@@ -1835,7 +1835,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "pad_op_test",
     size = "small",
     srcs = ["pad_op_test.py"],
@@ -1847,7 +1847,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "padding_fifo_queue_test",
     size = "small",
     srcs = ["padding_fifo_queue_test.py"],
@@ -1861,7 +1861,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "py_func_test",
     size = "small",
     srcs = ["py_func_test.py"],
@@ -1879,7 +1879,7 @@ cuda_py_test(
     tags = ["no_windows"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "reduce_join_op_test",
     size = "small",
     srcs = ["reduce_join_op_test.py"],
@@ -1892,7 +1892,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "reduction_ops_test",
     size = "medium",
     srcs = ["reduction_ops_test.py"],
@@ -1907,7 +1907,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "reduction_ops_test_big",
     size = "medium",
     srcs = ["reduction_ops_test_big.py"],
@@ -1927,7 +1927,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "relu_op_test",
     size = "small",
     srcs = ["relu_op_test.py"],
@@ -1944,7 +1944,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "reshape_op_test",
     size = "small",
     srcs = ["reshape_op_test.py"],
@@ -1956,7 +1956,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "reverse_sequence_op_test",
     size = "small",
     srcs = ["reverse_sequence_op_test.py"],
@@ -1968,7 +1968,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "compare_and_bitpack_op_test",
     size = "small",
     srcs = ["compare_and_bitpack_op_test.py"],
@@ -1980,7 +1980,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "scalar_test",
     size = "small",
     srcs = ["scalar_test.py"],
@@ -1998,7 +1998,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "scan_ops_test",
     size = "medium",
     srcs = ["scan_ops_test.py"],
@@ -2011,7 +2011,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "session_ops_test",
     size = "small",
     srcs = ["session_ops_test.py"],
@@ -2023,7 +2023,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "shape_ops_test",
     size = "medium",
     srcs = ["shape_ops_test.py"],
@@ -2039,7 +2039,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "softmax_op_test",
     size = "medium",
     srcs = ["softmax_op_test.py"],
@@ -2053,7 +2053,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "softplus_op_test",
     size = "small",
     srcs = ["softplus_op_test.py"],
@@ -2066,7 +2066,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "softsign_op_test",
     size = "small",
     srcs = ["softsign_op_test.py"],
@@ -2079,7 +2079,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "spacetobatch_op_test",
     size = "small",
     srcs = ["spacetobatch_op_test.py"],
@@ -2094,7 +2094,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "spacetodepth_op_test",
     size = "medium",
     srcs = ["spacetodepth_op_test.py"],
@@ -2138,7 +2138,7 @@ tf_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "sparse_tensor_dense_matmul_grad_test",
     size = "small",
     srcs = ["sparse_tensor_dense_matmul_grad_test.py"],
@@ -2152,7 +2152,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "sparse_xent_op_test",
     size = "small",
     srcs = ["sparse_xent_op_test.py"],
@@ -2176,7 +2176,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "split_op_test",
     size = "medium",
     srcs = ["split_op_test.py"],
@@ -2190,7 +2190,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "stack_ops_test",
     size = "small",
     srcs = ["stack_ops_test.py"],
@@ -2205,7 +2205,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "string_to_hash_bucket_op_test",
     size = "small",
     srcs = ["string_to_hash_bucket_op_test.py"],
@@ -2217,7 +2217,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "string_to_number_op_test",
     size = "small",
     srcs = ["string_to_number_op_test.py"],
@@ -2229,7 +2229,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "summary_audio_op_test",
     size = "small",
     srcs = ["summary_audio_op_test.py"],
@@ -2242,7 +2242,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "summary_image_op_test",
     size = "small",
     srcs = ["summary_image_op_test.py"],
@@ -2257,7 +2257,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "tensor_array_ops_test",
     size = "small",
     srcs = ["tensor_array_ops_test.py"],
@@ -2285,7 +2285,7 @@ cuda_py_test(
     flaky = 1,  # create_local_cluster sometimes times out.
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "trace_op_test",
     size = "small",
     srcs = ["trace_op_test.py"],
@@ -2297,7 +2297,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "transpose_op_test",
     size = "large",
     srcs = ["transpose_op_test.py"],
@@ -2314,7 +2314,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "unstack_op_test",
     size = "small",
     srcs = ["unstack_op_test.py"],
@@ -2326,7 +2326,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "variable_ops_test",
     size = "small",
     srcs = ["variable_ops_test.py"],
@@ -2343,7 +2343,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "xent_op_test",
     size = "small",
     srcs = ["xent_op_test.py"],
@@ -2359,7 +2359,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "zero_division_test",
     size = "small",
     srcs = ["zero_division_test.py"],
@@ -2370,7 +2370,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "atrous_conv2d_test",
     size = "medium",
     srcs = ["atrous_conv2d_test.py"],
@@ -2389,7 +2389,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "atrous_convolution_test",
     size = "medium",
     srcs = ["atrous_convolution_test.py"],
@@ -2404,7 +2404,7 @@ cuda_py_test(
     tags = ["manual"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "pool_test",
     size = "medium",
     srcs = ["pool_test.py"],
@@ -2417,7 +2417,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv2d_backprop_filter_grad_test",
     size = "medium",
     srcs = ["conv2d_backprop_filter_grad_test.py"],
@@ -2434,7 +2434,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv3d_transpose_test",
     size = "medium",
     srcs = ["conv3d_transpose_test.py"],
@@ -2447,7 +2447,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv_ops_test",
     size = "large",
     srcs = ["conv_ops_test.py"],
@@ -2470,7 +2470,7 @@ cuda_py_test(
     shard_count = 4,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "depthwise_conv_op_test",
     size = "medium",  # http://b/30603882
     srcs = ["depthwise_conv_op_test.py"],
@@ -2501,7 +2501,7 @@ tf_py_test(
     tags = ["no_windows"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "division_future_test",
     size = "medium",
     srcs = ["division_future_test.py"],
@@ -2513,7 +2513,7 @@ cuda_py_test(
     tags = ["manual"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "dct_ops_test",
     srcs = ["dct_ops_test.py"],
     additional_deps = [
@@ -2525,7 +2525,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "fft_ops_test",
     size = "large",
     srcs = ["fft_ops_test.py"],
@@ -2540,7 +2540,7 @@ cuda_py_test(
     shard_count = 3,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "pooling_ops_3d_test",
     size = "medium",
     srcs = ["pooling_ops_3d_test.py"],
@@ -2553,7 +2553,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "pooling_ops_test",
     size = "medium",
     srcs = ["pooling_ops_test.py"],
@@ -2571,7 +2571,7 @@ cuda_py_test(
     shard_count = 4,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "rnn_test",
     size = "medium",
     srcs = ["rnn_test.py"],
@@ -2600,7 +2600,7 @@ cuda_py_test(
     shard_count = 10,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "scatter_ops_test",
     size = "large",  # NOTE: This is not run by default.
     srcs = ["scatter_ops_test.py"],
@@ -2613,7 +2613,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "slice_op_test",
     size = "large",
     srcs = ["slice_op_test.py"],
@@ -2627,7 +2627,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "sparse_matmul_op_test",
     size = "medium",
     srcs = ["sparse_matmul_op_test.py"],
@@ -2640,7 +2640,7 @@ cuda_py_test(
     tags = ["no_windows"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "sparse_ops_test",
     size = "medium",
     srcs = ["sparse_ops_test.py"],
@@ -2663,7 +2663,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "sparse_tensor_dense_matmul_op_test",
     size = "medium",
     srcs = ["sparse_tensor_dense_matmul_op_test.py"],
@@ -2684,7 +2684,7 @@ cuda_py_test(
 
 # TODO(gpapan): Revisit the gradient of extract_image_patches_op to resolve
 # http://b/31080670.
-cuda_py_test(
+gpu_py_test(
     name = "extract_image_patches_grad_test",
     size = "medium",
     srcs = ["extract_image_patches_grad_test.py"],
@@ -2698,7 +2698,7 @@ cuda_py_test(
     tags = ["notap"],  # http://b/31080670
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "stage_op_test",
     size = "medium",
     srcs = ["stage_op_test.py"],
@@ -2712,7 +2712,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "map_stage_op_test",
     size = "medium",
     srcs = ["map_stage_op_test.py"],
@@ -2726,7 +2726,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "concat_op_test",
     size = "medium",
     srcs = ["concat_op_test.py"],
@@ -2743,7 +2743,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "large_concat_op_test",
     size = "medium",
     srcs = ["large_concat_op_test.py"],
@@ -2758,7 +2758,7 @@ cuda_py_test(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "conv_ops_3d_test",
     size = "medium",
     srcs = ["conv_ops_3d_test.py"],
@@ -2771,7 +2771,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "cwise_ops_test",
     size = "medium",
     srcs = ["cwise_ops_test.py"],
@@ -2791,7 +2791,7 @@ cuda_py_test(
     shard_count = 50,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "embedding_ops_test",
     size = "medium",
     srcs = ["embedding_ops_test.py"],
@@ -2816,7 +2816,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "linalg_grad_test",
     size = "medium",
     srcs = ["linalg_grad_test.py"],
@@ -2833,7 +2833,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "matrix_band_part_op_test",
     size = "medium",
     srcs = ["matrix_band_part_op_test.py"],
@@ -2846,7 +2846,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "self_adjoint_eig_op_test",
     size = "medium",
     srcs = ["self_adjoint_eig_op_test.py"],
@@ -2863,7 +2863,7 @@ cuda_py_test(
     tags = ["no_windows"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "qr_op_test",
     size = "medium",
     srcs = ["qr_op_test.py"],
@@ -2878,7 +2878,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "svd_op_test",
     size = "medium",
     srcs = ["svd_op_test.py"],
@@ -2893,7 +2893,7 @@ cuda_py_test(
     shard_count = 20,
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "norm_op_test",
     size = "medium",
     srcs = ["norm_op_test.py"],
@@ -2908,7 +2908,7 @@ cuda_py_test(
     tags = ["no_windows_gpu"],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "tensordot_op_test",
     size = "medium",
     srcs = ["tensordot_op_test.py"],

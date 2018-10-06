@@ -125,3 +125,7 @@ pip3 install --upgrade h5py==2.8.0
 # Install last working version of setuptools.
 pip2 install --upgrade setuptools==39.1.0
 pip3 install --upgrade setuptools==39.1.0
+
+# Install packages required by the CI unit tests
+pip2 install portpicker
+pip3 install portpicker

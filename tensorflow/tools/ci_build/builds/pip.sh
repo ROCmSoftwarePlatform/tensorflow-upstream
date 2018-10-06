@@ -131,6 +131,7 @@ echo "Using Bazel flags: ${BAZEL_FLAGS}"
 
 PIP_BUILD_TARGET="//tensorflow/tools/pip_package:build_pip_package"
 GPU_FLAG=""
+ROCM_FLAG=""
 if [[ ${CONTAINER_TYPE} == "cpu" ]] || \
    [[ ${CONTAINER_TYPE} == "debian.jessie.cpu" ]]; then
   bazel build ${BAZEL_FLAGS} ${PIP_BUILD_TARGET} || \
@@ -139,6 +140,10 @@ elif [[ ${CONTAINER_TYPE} == "gpu" ]]; then
   bazel build ${BAZEL_FLAGS} ${PIP_BUILD_TARGET} || \
       die "Build failed."
   GPU_FLAG="--gpu"
+elif [[ ${CONTAINER_TYPE} == "rocm" ]]; then
+  bazel build ${BAZEL_FLAGS} ${PIP_BUILD_TARGET} || \
+      die "Build failed."
+  ROCM_FLAG="--rocm"
 else
   die "Unrecognized container type: \"${CONTAINER_TYPE}\""
 fi
@@ -192,7 +197,7 @@ fi
 PIP_WHL_DIR="${PIP_TEST_ROOT}/whl"
 PIP_WHL_DIR=$(realpath ${PIP_WHL_DIR})  # Get absolute path
 rm -rf ${PIP_WHL_DIR} && mkdir -p ${PIP_WHL_DIR}
-bazel-bin/tensorflow/tools/pip_package/build_pip_package ${PIP_WHL_DIR} ${GPU_FLAG} ${NIGHTLY_FLAG} || \
+bazel-bin/tensorflow/tools/pip_package/build_pip_package ${PIP_WHL_DIR} ${GPU_FLAG} ${ROCM_FLAG} ${NIGHTLY_FLAG} || \
     die "build_pip_package FAILED"
 
 WHL_PATH=$(ls ${PIP_WHL_DIR}/${PROJECT_NAME}*.whl)
@@ -255,7 +260,8 @@ if [[ $(uname) == "Linux" ]]; then
       die "ERROR: Cannot find repaired wheel."
     fi
   # Copy and rename for gpu manylinux as we do not want auditwheel to package in libcudart.so
-  elif [[ ${CONTAINER_TYPE} == "gpu" ]]; then
+  elif [[ ${CONTAINER_TYPE} == "gpu" ]] || \
+       [[ ${CONTAINER_TYPE} == "rocm" ]]; then
     WHL_PATH=${AUDITED_WHL_NAME}
     cp ${WHL_DIR}/${WHL_BASE_NAME} ${WHL_PATH}
     echo "Copied manylinx1 wheel file at ${WHL_PATH}"
@@ -396,7 +402,7 @@ do_virtualenv_pip_test() {
     return ${SKIP_RETURN_CODE}
   else
     # Call run_pip_tests.sh to perform test-on-install
-    "${SCRIPT_DIR}/run_pip_tests.sh" --virtualenv ${GPU_FLAG} ${MAC_FLAG}
+    "${SCRIPT_DIR}/run_pip_tests.sh" --virtualenv ${GPU_FLAG} ${ROCM_FLAG} ${MAC_FLAG}
     if [[ $? != 0 ]]; then
       echo "PIP tests-on-install FAILED"
       return 1
@@ -416,7 +422,7 @@ do_virtualenv_oss_serial_pip_test() {
   else
     # Call run_pip_tests.sh to perform test-on-install
     "${SCRIPT_DIR}/run_pip_tests.sh" \
-      --virtualenv ${GPU_FLAG} ${MAC_FLAG} --oss_serial
+      --virtualenv ${GPU_FLAG} ${ROCM_FLAG} ${MAC_FLAG} --oss_serial
     if [[ $? != 0 ]]; then
       echo "PIP tests-on-install (oss_serial) FAILED"
       return 1
@@ -429,7 +435,7 @@ do_virtualenv_oss_serial_pip_test() {
 ################################################################################
 do_test_user_ops() {
   if [[ "${DO_TEST_USER_OPS}" == "1" ]]; then
-    "${SCRIPT_DIR}/test_user_ops.sh" --virtualenv ${GPU_FLAG}
+    "${SCRIPT_DIR}/test_user_ops.sh" --virtualenv ${GPU_FLAG} ${ROCM_FLAG}
     if [[ $? != 0 ]]; then
       echo "PIP user-op tests-on-install FAILED"
       return 1

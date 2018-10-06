@@ -75,6 +75,8 @@ class ReluTest(test.TestCase):
   def _testReluInt8x4(self, np_inputs):
     if not test.is_gpu_available(cuda_only=True):
       return
+    if test.is_built_with_rocm():
+      return
     np_relu = self._npRelu(np_inputs)
     with self.test_session(use_gpu=True):
       relu = nn_ops.relu(constant_op.constant(np_inputs, dtypes.qint8))

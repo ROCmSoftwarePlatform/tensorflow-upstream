@@ -82,7 +82,7 @@ limitations under the License.
 //
 // We need to disable this for GPU builds, though, since nvcc8 and older
 // don't recognize `__builtin_expect` as a builtin, and fail compilation.
-#if (!defined(__NVCC__)) && \
+#if (!defined(__NVCC__)) && (!defined(__HIP_DEVICE_COMPILE__)) && \
     (TF_HAS_BUILTIN(__builtin_expect) || (defined(__GNUC__) && __GNUC__ >= 3))
 #define TF_PREDICT_FALSE(x) (__builtin_expect(x, 0))
 #define TF_PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))

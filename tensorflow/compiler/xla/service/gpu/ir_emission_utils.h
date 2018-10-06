@@ -28,7 +28,7 @@ limitations under the License.
 namespace xla {
 namespace gpu {
 
-constexpr int64 kWarpSize = 32;
+constexpr int64 kWarpSize = 64;
 
 // Returns true if `hlo` will be implemented as a call to BLAS gemm.
 //
@@ -141,7 +141,7 @@ llvm::Value* EmitPrintf(absl::string_view fmt,
 //
 // https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-shfl-sync
 llvm::Value* EmitFullWarpShuffleDown(llvm::Value* value, llvm::Value* offset,
-                                     llvm::IRBuilder<>* builder);
+                                     llvm::IRBuilder<>* builder, llvm::Module* module);
 
 }  // namespace gpu
 }  // namespace xla

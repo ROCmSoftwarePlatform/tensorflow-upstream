@@ -107,7 +107,7 @@ class GpuElementalIrEmitter : public ElementalIrEmitter {
       const string& callee_name, absl::Span<llvm::Value* const> operands,
       absl::Span<const PrimitiveType> input_types, PrimitiveType output_type);
 
-  // Emits IR to call a libdevice function of type [T] -> T.  Adjusts
+  // Emits IR to call a ROCDL function of type [T] -> T.  Adjusts
   // callee_name according to T.  Returns the IR value that represents the
   // return value of the function.
   StatusOr<llvm::Value*> EmitLibdeviceMathCall(

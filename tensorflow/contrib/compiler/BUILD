@@ -9,7 +9,7 @@ package_group(
 )
 
 load("//tensorflow:tensorflow.bzl", "tf_py_test")
-load("//tensorflow:tensorflow.bzl", "cuda_py_test")
+load("//tensorflow:tensorflow.bzl", "gpu_py_test")
 
 py_library(
     name = "compiler_py",
@@ -24,7 +24,7 @@ py_library(
     ],
 )
 
-cuda_py_test(
+gpu_py_test(
     name = "jit_test",
     size = "small",
     srcs = ["jit_test.py"],

@@ -377,6 +377,8 @@ using KernelFactory = std::function<KernelInterface*()>;
 
 StreamExecutorFactory* MakeCUDAExecutorImplementation();
 
+StreamExecutorFactory* MakeROCMExecutorImplementation();
+
 StreamExecutorFactory* MakeOpenCLExecutorImplementation();
 
 extern StreamExecutorFactory MakeHostExecutorImplementation;
