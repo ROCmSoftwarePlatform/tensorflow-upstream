@@ -28,6 +28,11 @@ limitations under the License.
 #include "tensorflow/core/kernels/relu_op_functor.h"
 #include "tensorflow/core/lib/core/errors.h"
 
+#ifdef TENSORFLOW_USE_ROCM
+#include "tensorflow/core/kernels/gpu_utils.h"
+#include "tensorflow/core/platform/stream_executor.h"
+#endif
+
 namespace tensorflow {
 
 template <typename Device, typename T>

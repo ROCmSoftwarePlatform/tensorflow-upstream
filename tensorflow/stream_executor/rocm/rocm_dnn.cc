@@ -40,6 +40,7 @@ limitations under the License.
 #include "tensorflow/stream_executor/stream.h"
 #include "tensorflow/stream_executor/stream_executor_pimpl.h"
 #include "tensorflow/core/lib/hash/hash.h"
+
 // clang-format off
 #include "rocm/include/miopen/miopen.h"
 // clang-format on
@@ -95,6 +96,24 @@ string ToString(miopenStatus_t status) {
       return port::StrCat("<unknown miopen status: ", static_cast<int>(status),
                           ">");
   }
+}
+
+miopenTensorOp_t GetTensorOpType(const string& bop_type) {
+  miopenTensorOp_t optype = miopenTensorOpAdd;
+
+  if (bop_type == "Add") {
+    optype = miopenTensorOpAdd;
+  } else if (bop_type == "Mul") {
+    optype = miopenTensorOpMul;
+  } else if (bop_type == "Maximum") {
+    optype = miopenTensorOpMax;
+  } else if (bop_type == "Minimum") {
+    optype = miopenTensorOpMin;
+  } else {
+    // todo : how to communicate error?
+  }
+
+  return optype;
 }
 
 namespace wrap {
@@ -3549,8 +3568,22 @@ bool MIOpenSupport::DoActivate(Stream* stream,
                               const DeviceMemory<float>& input_data,
                               DeviceMemory<float>* output_data,
                               uint64 options) {
-  LOG(ERROR) << "miopen does not support activation yet";
-  return false;
+  ScopedTensorDescriptor input_nd{parent_, dimensions, miopenFloat};
+  ScopedActivationDescriptor activation_nd{parent_, activation_mode};
+  float alpha = 1.0;
+  float beta = 0.0;
+
+  auto status = wrap::miopenActivationForward(
+      parent_, ToHandle(dnn_handle_), activation_nd.handle(), &alpha,
+      input_nd.handle(), input_data.opaque(), &beta, input_nd.handle(),
+      output_data->opaque());
+
+  if (status != miopenStatusSuccess) {
+    LOG(ERROR) << "stream " << stream << " could not enqueue activation.";
+    return false;
+  }
+
+  return true;
 }
 
 bool MIOpenSupport::DoPoolForward(
