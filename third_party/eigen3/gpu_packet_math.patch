@@ -40,3 +40,18 @@
      return res;
    }
  };
+diff --git a/Eigen/src/Core/arch/GPU/Half.h b/Eigen/src/Core/arch/GPU/Half.h
+index f87d8a1..a84c4c8 100644
+--- a/Eigen/src/Core/arch/GPU/Half.h
++++ b/Eigen/src/Core/arch/GPU/Half.h
+@@ -52,7 +52,9 @@ namespace half_impl {
+ #if !defined(EIGEN_HAS_GPU_FP16)
+ // Make our own __half_raw definition that is similar to CUDA's.
+ struct __half_raw {
+-  EIGEN_DEVICE_FUNC __half_raw() : x(0) {}
++  // The default constructor cannot initialize its member, otherwise the
++  // derived class Eigen::Half cannot be used as __shared__ variable.
++  EIGEN_DEVICE_FUNC __half_raw() {}
+   explicit EIGEN_DEVICE_FUNC __half_raw(unsigned short raw) : x(raw) {}
+   unsigned short x;
+ };
