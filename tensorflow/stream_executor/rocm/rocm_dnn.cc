@@ -2600,23 +2600,40 @@ struct MIOpenAllocatorContext {
   Stream* stream_;
 };
 
-void* MIOpenAllocatorCallback(void* ctx, size_t size_in_bytes) {
+void* MIOpenAllocatorCallback(void* ctx, size_t size_in_bytes, bool persistent = false) {
   auto* mac = static_cast<MIOpenAllocatorContext*>(ctx);
-  auto allocated =
-      mac->scratch_allocator_->AllocateBytes(mac->stream_, size_in_bytes);
 
   DeviceMemory<uint8> scratch;
-  if (allocated.ok()) {
-    scratch = allocated.ValueOrDie();
-    return scratch.opaque();
+  if (persistent) {
+      LOG(INFO) << "MIOpenAllocatorCallback: allocate persistent memory.";
+      scratch = mac->stream_->parent()->AllocateArray<uint8>(size_in_bytes);
+      if(!scratch.is_null()) {
+        return scratch.opaque();
+      } else {
+        return nullptr;
+      }
   } else {
-    return nullptr;
+      auto allocated = 
+          mac->scratch_allocator_->AllocateBytes(mac->stream_, size_in_bytes);
+
+      if (allocated.ok()) {
+        scratch = allocated.ValueOrDie();
+        return scratch.opaque();
+      } else {
+        return nullptr;
+      }
   }
 }
 
-void MIOpenDeallocatorCallback(void * ctx, void *mem)
+void MIOpenDeallocatorCallback(void * ctx, void *mem, size_t size_in_bytes=0, bool persistent = false)
 {
-  // Don't need dealloactor since the TensorFlow heap will automatically reclaim the memory
+  if (persistent) {
+      LOG(INFO) << "MIOpenAllocatorCallback: deallocate persistent memory.";
+      DeviceMemoryBase tmp(mem, size_in_bytes);
+      auto* mac = static_cast<MIOpenAllocatorContext*>(ctx);
+      mac->stream_->parent()->Deallocate(&tmp);
+  }
+  // Don't need dealloactor for non-persistent cases since the TensorFlow heap will automatically reclaim the memory
 }
 
 port::Status MIOpenSupport::DoPrepareForConvolution(
