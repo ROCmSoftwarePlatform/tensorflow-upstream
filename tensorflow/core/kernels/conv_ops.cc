@@ -1116,7 +1116,6 @@ void LaunchConv2DOp<GPUDevice, T>::operator()(
                            output_tensor, input_desc, filter_desc, output_desc,
                            conv_desc, stream->parent(), results);
     OP_REQUIRES_OK(ctx, BestCudnnConvAlgorithm(results, &algorithm_config));
-
     AutoTuneConv::GetInstance()->Insert(conv_parameters, algorithm_config);
   }
 

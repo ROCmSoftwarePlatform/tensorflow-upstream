@@ -871,11 +871,17 @@ void LaunchConv2DBackpropFilterOp<Eigen::GpuDevice, T>::operator()(
   AlgorithmConfig algorithm_config;
   if (cudnn_use_autotune && !AutoTuneConvBwdFilter::GetInstance()->Find(
                                 conv_parameters, &algorithm_config)) {
-#if GOOGLE_CUDA
     std::vector<AlgorithmDesc> algorithms;
+#if GOOGLE_CUDA
     CHECK(stream->parent()->GetConvolveBackwardFilterAlgorithms(
         conv_parameters.ShouldIncludeWinogradNonfusedAlgo<T>(stream->parent()),
         &algorithms));
+#elif TENSORFLOW_USE_ROCM
+    CHECK(stream->parent()->GetMIOpenConvolveAlgorithms(
+        se::dnn::ConvolutionKind::BACKWARD_FILTER, stream,
+        se::dnn::ToDataType<T>::value, input_desc, filter_desc, conv_desc,
+        output_desc, &algorithms));
+#endif
     std::vector<tensorflow::AutotuneResult> results;
     for (auto profile_algorithm : algorithms) {
       // TODO(zhengxq): profile each algorithm multiple times to better
@@ -908,22 +914,6 @@ void LaunchConv2DBackpropFilterOp<Eigen::GpuDevice, T>::operator()(
                            filter_desc, output_desc, conv_desc,
                            stream->parent(), results);
     OP_REQUIRES_OK(ctx, BestCudnnConvAlgorithm(results, &algorithm_config));
-#elif TENSORFLOW_USE_ROCM
-    ProfileResult best_result;
-    DnnScratchAllocator scratch_allocator(ConvolveBackwardFilterScratchSize,
-                                          ctx);
-    bool miopen_find_status =
-        stream
-            ->ThenConvolveBackwardFilterWithAlgorithm(
-                input_desc, input_ptr, output_desc, out_backprop_ptr, conv_desc,
-                filter_desc, &filter_backprop_ptr, &scratch_allocator,
-                AlgorithmConfig(), &best_result)
-            .ok();
-    OP_REQUIRES(ctx, miopen_find_status && best_result.is_valid(),
-                errors::NotFound("Failed to find backward filter algorithm!"));
-    algorithm_config.set_algorithm(best_result.algorithm());
-    algorithm_config.set_scratch_size(best_result.scratch_size());
-#endif
     AutoTuneConvBwdFilter::GetInstance()->Insert(conv_parameters,
                                                  algorithm_config);
   }

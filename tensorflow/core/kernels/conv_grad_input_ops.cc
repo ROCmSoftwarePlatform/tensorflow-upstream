@@ -1096,11 +1096,17 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
   AlgorithmConfig algorithm_config;
   if (cudnn_use_autotune && !AutoTuneConvBwdData::GetInstance()->Find(
                                 conv_parameters, &algorithm_config)) {
-#if GOOGLE_CUDA
     std::vector<AlgorithmDesc> algorithms;
+#if GOOGLE_CUDA
     CHECK(stream->parent()->GetConvolveBackwardDataAlgorithms(
         conv_parameters.ShouldIncludeWinogradNonfusedAlgo<T>(stream->parent()),
         &algorithms));
+#elif TENSORFLOW_USE_ROCM
+    CHECK(stream->parent()->GetMIOpenConvolveAlgorithms(
+        se::dnn::ConvolutionKind::BACKWARD_DATA, stream,
+        se::dnn::ToDataType<T>::value, input_desc, filter_desc, conv_desc,
+        output_desc, &algorithms));
+#endif
     std::vector<tensorflow::AutotuneResult> results;
     for (auto profile_algorithm : algorithms) {
       // TODO(zhengxq): profile each algorithm multiple times to better
@@ -1131,24 +1137,6 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
         in_backprop_ptr, filter_ptr, out_backprop_ptr, input_desc, filter_desc,
         output_desc, conv_desc, stream->parent(), results);
     OP_REQUIRES_OK(ctx, BestCudnnConvAlgorithm(results, &algorithm_config));
-#elif TENSORFLOW_USE_ROCM
-    // MIOpen has its own Find and autotuner so use it here, passing
-    // default AlgorithmConfig to force a search
-    DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize, ctx);
-    ProfileResult best_result;
-    bool miopen_find_status =
-        stream
-            ->ThenConvolveBackwardDataWithAlgorithm(
-                filter_desc, filter_ptr, output_desc, out_backprop_ptr,
-                conv_desc, input_desc, &in_backprop_ptr, &scratch_allocator,
-                AlgorithmConfig(), &best_result)
-            .ok();
-    OP_REQUIRES(ctx, miopen_find_status && best_result.is_valid(),
-                errors::NotFound("Failed to find backwards-data algorithm!"));
-
-    algorithm_config.set_algorithm(best_result.algorithm());
-    algorithm_config.set_scratch_size(best_result.scratch_size());
-#endif
     AutoTuneConvBwdData::GetInstance()->Insert(conv_parameters,
                                                algorithm_config);
   }
