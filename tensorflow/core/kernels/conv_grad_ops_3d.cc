@@ -1357,12 +1357,18 @@ class Conv3DBackpropInputOp<GPUDevice, T> : public OpKernel {
     AlgorithmConfig algorithm_config;
     if (cudnn_use_autotune_ && !AutoTuneConv3dBwdData::GetInstance()->Find(
                                    conv_parameters, &algorithm_config)) {
-#if GOOGLE_CUDA
       std::vector<AlgorithmDesc> algorithms;
+#if GOOGLE_CUDA
       CHECK(stream->parent()->GetConvolveBackwardDataAlgorithms(
           conv_parameters.ShouldIncludeWinogradNonfusedAlgo<T>(
               stream->parent()),
           &algorithms));
+#elif TENSORFLOW_USE_ROCM
+      CHECK(stream->parent()->GetMIOpenConvolveAlgorithms(
+          se::dnn::ConvolutionKind::BACKWARD_DATA, stream,
+          se::dnn::ToDataType<T>::value, input_desc, filter_desc, conv_desc,
+          output_desc, &algorithms));
+#endif
       ProfileResult best_result;
       ProfileResult best_result_no_scratch;
       for (auto profile_algorithm : algorithms) {
@@ -1402,22 +1408,6 @@ class Conv3DBackpropInputOp<GPUDevice, T> : public OpKernel {
         algorithm_config.set_algorithm_no_scratch(
             best_result_no_scratch.algorithm());
       }
-#elif TENSORFLOW_USE_ROCM
-      DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize,
-                                            context);
-      ProfileResult best_result;
-      bool miopen_find_status =
-          stream
-              ->ThenConvolveBackwardDataWithAlgorithm(
-                  filter_desc, filter_ptr, output_desc, out_backprop_ptr,
-                  conv_desc, input_desc, &in_backprop_ptr, &scratch_allocator,
-                  AlgorithmConfig(), &best_result)
-              .ok();
-      OP_REQUIRES(context, miopen_find_status && best_result.is_valid(),
-                  errors::NotFound("Failed to find backward data algorithm!"));
-      algorithm_config.set_algorithm(best_result.algorithm());
-      algorithm_config.set_scratch_size(best_result.scratch_size());
-#endif
       AutoTuneConv3dBwdData::GetInstance()->Insert(conv_parameters,
                                                    algorithm_config);
     }
@@ -1780,12 +1770,18 @@ class Conv3DBackpropFilterOp<GPUDevice, T> : public OpKernel {
     AlgorithmConfig algorithm_config;
     if (cudnn_use_autotune_ && !AutoTuneConv3dBwdFilter::GetInstance()->Find(
                                    conv_parameters, &algorithm_config)) {
-#if GOOGLE_CUDA
       std::vector<AlgorithmDesc> algorithms;
+#if GOOGLE_CUDA
       CHECK(stream->parent()->GetConvolveBackwardFilterAlgorithms(
           conv_parameters.ShouldIncludeWinogradNonfusedAlgo<T>(
               stream->parent()),
           &algorithms));
+#elif TENSORFLOW_USE_ROCM
+      CHECK(stream->parent()->GetMIOpenConvolveAlgorithms(
+          se::dnn::ConvolutionKind::BACKWARD_FILTER, stream,
+          se::dnn::ToDataType<T>::value, input_desc, filter_desc, conv_desc,
+          output_desc, &algorithms));
+#endif
       ProfileResult best_result;
       ProfileResult best_result_no_scratch;
       for (auto profile_algorithm : algorithms) {
@@ -1826,23 +1822,6 @@ class Conv3DBackpropFilterOp<GPUDevice, T> : public OpKernel {
         algorithm_config.set_algorithm_no_scratch(
             best_result_no_scratch.algorithm());
       }
-#elif TENSORFLOW_USE_ROCM
-      DnnScratchAllocator scratch_allocator(ConvolveBackwardFilterScratchSize,
-                                            context);
-      ProfileResult best_result;
-      bool miopen_find_status =
-          stream
-              ->ThenConvolveBackwardFilterWithAlgorithm(
-                  input_desc, input_ptr, output_desc, out_backprop_ptr,
-                  conv_desc, filter_desc, &filter_backprop_ptr,
-                  &scratch_allocator, AlgorithmConfig(), &best_result)
-              .ok();
-      OP_REQUIRES(
-          context, miopen_find_status && best_result.is_valid(),
-          errors::NotFound("Failed to find backward filter algorithm!"));
-      algorithm_config.set_algorithm(best_result.algorithm());
-      algorithm_config.set_scratch_size(best_result.scratch_size());
-#endif
       AutoTuneConv3dBwdFilter::GetInstance()->Insert(conv_parameters,
                                                      algorithm_config);
     }
