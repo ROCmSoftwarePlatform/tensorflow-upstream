@@ -47,7 +47,6 @@ class MiopenConvAlgorithmPicker : public HloModulePass {
 
   StatusOr<bool> Run(HloModule* module) override;
 
- private:
   struct AutotuneResult {
     int64 algorithm;
     bool tensor_ops_enabled;
@@ -55,13 +54,16 @@ class MiopenConvAlgorithmPicker : public HloModulePass {
     absl::Duration runtime;
   };
 
+ private:
   StatusOr<bool> RunOnComputation(HloComputation* computation);
   StatusOr<bool> RunOnInstruction(HloInstruction* instr);
   StatusOr<AutotuneResult> PickBestAlgorithm(
       const HloCustomCallInstruction* instr);
+  StatusOr<AutotuneResult> PickBestAlgorithmNoCache(
+      const HloCustomCallInstruction* instr);
 
   se::StreamExecutor* stream_exec_;                   // never null
-  se::DeviceMemoryAllocator* allocator_;                  // may be null
+  se::DeviceMemoryAllocator* allocator_;              // may be null
   Compiler* compiler_;
 };
 
