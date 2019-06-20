@@ -2676,26 +2676,6 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
             "failed: ",
             ToString(status)));
       }
-
-      // The call to *CompileSolution solution should be in this routine
-      // in order to ensure the running time measured in the DoConvole step
-      // is accurate (in the sense it does not include the time needed to
-      // do the compile step)
-      //
-      // Having this call here also means that the *CompileSolution routine
-      // will get called more than once for same solution_id, but that should
-      // be okay since the all subsequent calls to *CompileSolution for the
-      // same solution_id will return immediately (they are no-ops)
-      status = wrap::miopenConvolutionForwardCompileSolution(
-          miopen.handle(), filter.handle(), input_nd.handle(), conv.handle(),
-          output_nd.handle(), solution_id);
-
-      if (status != miopenStatusSuccess) {
-        return port::InternalError(absl::StrCat(
-            "call to miopenConvolutionForwardCompileSolution failed: ",
-            ToString(status)));
-      }
-
       break;
     }
 
@@ -2710,17 +2690,6 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
             "failed: ",
             ToString(status)));
       }
-
-      status = wrap::miopenConvolutionBackwardDataCompileSolution(
-          miopen.handle(), output_nd.handle(), filter.handle(), conv.handle(),
-          input_nd.handle(), solution_id);
-
-      if (status != miopenStatusSuccess) {
-        return port::InternalError(absl::StrCat(
-            "call to miopenConvolutionBackwardDataCompileSolution failed: ",
-            ToString(status)));
-      }
-
       break;
     }
 
@@ -2737,16 +2706,6 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
             "failed: ",
             ToString(status)));
       }
-
-      status = wrap::miopenConvolutionBackwardWeightsCompileSolution(
-          miopen.handle(), output_nd.handle(), input_nd.handle(), conv.handle(),
-          filter.handle(), solution_id);
-
-      if (status != miopenStatusSuccess) {
-        return port::InternalError(absl::StrCat(
-            "call to miopenConvolutionBackwardWeightsCompileSolution failed: ",
-            ToString(status)));
-      }
       break;
     }
 
@@ -2757,7 +2716,7 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
     }
   }
 
-  VLOG(kImmediateModeVlogLevel)
+  VLOG(2)
       << "miopen...GetSolutionWorkspaceSize returned " << scratch_memory_size
       << " for solution_id " << solution_id;
 
@@ -3038,13 +2997,30 @@ bool MIOpenSupport::GetMIOpenConvolveAlgorithms(
           miopen.handle(), filter.handle(), input_nd.handle(), conv.handle(),
           output_nd.handle(), maxSolutionCount, &solutionCount,
           solutions.get());
+
       if (status != miopenStatusSuccess) {
         LOG(FATAL) << "call to miopenConvolutionForwardGetSolution failed: "
                    << ToString(status);
         return false;
       }
+
+      for (int i = 0; i < solutionCount; i++) {
+        miopenConvSolution_t solution = solutions[i];
+
+        status = wrap::miopenConvolutionForwardCompileSolution(
+            miopen.handle(), filter.handle(), input_nd.handle(), conv.handle(),
+            output_nd.handle(), solution.solution_id);
+
+        if (status != miopenStatusSuccess) {
+          LOG(FATAL)
+              << "call to miopenConvolutionForwardCompileSolution failed: "
+              << ToString(status);
+          return false;
+        }
+      }
       break;
     }
+
     case dnn::ConvolutionKind::BACKWARD_DATA: {
       auto status = wrap::miopenConvolutionBackwardDataGetSolution(
           miopen.handle(), output_nd.handle(), filter.handle(), conv.handle(),
@@ -3054,6 +3030,21 @@ bool MIOpenSupport::GetMIOpenConvolveAlgorithms(
             << "call to miopenConvolutionBackwardDataGetSolution failed: "
             << ToString(status);
         return false;
+      }
+
+      for (int i = 0; i < solutionCount; i++) {
+        miopenConvSolution_t solution = solutions[i];
+
+        status = wrap::miopenConvolutionBackwardDataCompileSolution(
+            miopen.handle(), output_nd.handle(), filter.handle(), conv.handle(),
+            input_nd.handle(), solution.solution_id);
+
+        if (status != miopenStatusSuccess) {
+          LOG(FATAL) << " call to miopenConvolutionBackwardDataCompileSolution "
+                        "failed: "
+                     << ToString(status);
+          return false;
+        }
       }
       break;
     }
@@ -3066,6 +3057,22 @@ bool MIOpenSupport::GetMIOpenConvolveAlgorithms(
             << "call to miopenConvolutionBackwardWeightsGetSolution failed: "
             << ToString(status);
         return false;
+      }
+
+      for (int i = 0; i < solutionCount; i++) {
+        miopenConvSolution_t solution = solutions[i];
+
+        status = wrap::miopenConvolutionBackwardWeightsCompileSolution(
+            miopen.handle(), output_nd.handle(), input_nd.handle(),
+            conv.handle(), filter.handle(), solution.solution_id);
+
+        if (status != miopenStatusSuccess) {
+          LOG(FATAL)
+              << "call to miopenConvolutionBackwardWeightsCompileSolution "
+                 "failed: "
+              << ToString(status);
+          return false;
+        }
       }
       break;
     }
