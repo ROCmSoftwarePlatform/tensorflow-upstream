@@ -936,6 +936,7 @@ cc_library(
     hdrs = ["gpu_transfer_manager.h"],
     deps = [
         ":infeed_manager",
+        ":target_constants",
         ":outfeed_manager",
         ":target_constants",
         "//tensorflow/compiler/xla:literal",
