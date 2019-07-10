@@ -105,6 +105,12 @@ RUN bash -c 'echo -e "gfx803\ngfx900\ngfx906" >> /opt/rocm/bin/target.lst'
 #    CXX=/opt/rocm/hcc/bin/hcc cmake -DMIOPEN_BACKEND=HIP -DCMAKE_PREFIX_PATH="/opt/rocm/hcc;/opt/rocm/hip" -D#CMAKE_CXX_FLAGS="-isystem /usr/include/x86_64-linux-gnu/" .. -DMIOPEN_MAKE_BOOST_PUBLIC=ON && \
 #    make -j $(nproc) && make package && dpkg -i ./MIOpen*.deb
 
+
+# Use the version of MIOpen from the develop branch.
+# It has fixes that bring immediate mode performance on par with Find mode.
+# Without these fixes, immediate mode is very slow!
+RUN cd $HOME && wget https://www.dropbox.com/s/1vtjoo8p87l7v0c/MIOpen-HIP-2.1.0-4c55c24-Linux.deb && dpkg -i ./MIOpen-HIP-2.1.0-4c55c24-Linux.deb
+
 # Copy and run the install scripts.
 COPY install/*.sh /install/
 ARG DEBIAN_FRONTEND=noninteractive
