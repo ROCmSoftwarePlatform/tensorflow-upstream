@@ -2717,9 +2717,8 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
     }
   }
 
-  VLOG(2)
-      << "miopen...GetSolutionWorkspaceSize returned " << scratch_memory_size
-      << " for solution_id " << solution_id;
+  VLOG(2) << "miopen...GetSolutionWorkspaceSize returned "
+          << scratch_memory_size << " for solution_id " << solution_id;
 
   // allocate scratch memory
   if (scratch_memory_size != 0) {
@@ -2835,7 +2834,6 @@ port::Status MIOpenSupport::DoConvolve(
   miopenStatus_t status = miopenStatusSuccess;
   switch (kind) {
     case dnn::ConvolutionKind::FORWARD: {
-
       status = wrap::miopenConvolutionForwardImmediate(
           miopen.handle(), filter.handle(), filter_data.opaque(),
           input_nd.handle(), input_data.opaque(), conv.handle(),

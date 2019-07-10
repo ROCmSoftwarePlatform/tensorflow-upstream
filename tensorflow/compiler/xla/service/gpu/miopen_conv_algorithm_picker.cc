@@ -33,7 +33,7 @@ namespace {
 using absl::optional;
 using se::DeviceMemoryBase;
 using se::dnn::AlgorithmDesc;
-  
+
 class ScratchAllocator : public se::ScratchAllocator {
  public:
   ScratchAllocator(int device_ordinal, se::DeviceMemoryAllocator* memory_allocator)
@@ -201,8 +201,8 @@ StatusOr<ConvCacheKey> AutotuneCacheKeyfromInstruction(
 }
 
 tensorflow::mutex autotune_cache_lock(tensorflow::LINKER_INITIALIZED);
-auto& autotune_cache GUARDED_BY(autotune_cache_lock) =
-    *new absl::flat_hash_map<ConvCacheKey, MiopenConvAlgorithmPicker::AutotuneResult>();
+auto& autotune_cache GUARDED_BY(autotune_cache_lock) = *new absl::flat_hash_map<
+    ConvCacheKey, MiopenConvAlgorithmPicker::AutotuneResult>();
 auto& autotune_cache_stats GUARDED_BY(autotune_cache_lock) =
     *new ConvCacheStats();
 }  // anonymous namespace
@@ -237,7 +237,8 @@ MiopenConvAlgorithmPicker::PickBestAlgorithm(
     autotune_cache_stats.cache_misses++;
   }
 
-  StatusOr<MiopenConvAlgorithmPicker::AutotuneResult> result_or = PickBestAlgorithmNoCache(instr);
+  StatusOr<MiopenConvAlgorithmPicker::AutotuneResult> result_or =
+      PickBestAlgorithmNoCache(instr);
   if (result_or.ok()) {
     tensorflow::mutex_lock lock(autotune_cache_lock);
     CHECK(autotune_cache.insert({key, result_or.ValueOrDie()}).second);
@@ -276,8 +277,7 @@ MiopenConvAlgorithmPicker::PickBestAlgorithmNoCache(
     allocator = &*se_allocator;
   }
 
-  const auto initialize_buffer = [&stream](
-                                     DeviceMemoryBase buffer) {
+  const auto initialize_buffer = [&stream](DeviceMemoryBase buffer) {
     // Although we don't have evidence this matters, zero out the buffers
     // before autotuning.  It's conceivable that using uninitialized memory as
     // the inputs might affect performance if e.g. the inputs contain
@@ -348,7 +348,8 @@ MiopenConvAlgorithmPicker::PickBestAlgorithmNoCache(
 
   const auto& best_result = absl::c_min_element(
       profile_results,
-      [&](const MiopenConvAlgorithmPicker::AutotuneResult& lhs, const MiopenConvAlgorithmPicker::AutotuneResult& rhs) {
+      [&](const MiopenConvAlgorithmPicker::AutotuneResult& lhs,
+          const MiopenConvAlgorithmPicker::AutotuneResult& rhs) {
         return lhs.runtime < rhs.runtime;
       });
 
