@@ -432,7 +432,7 @@ cc_library(
         "triangular_solve_thunk.cc",
         "tuple_thunk.cc",
         "while_thunk.cc",
-    ] + if_cuda_is_configured([,
+    ] + if_cuda_is_configured([
         "cholesky_thunk.cc",
     ]),
     hdrs = [
@@ -456,7 +456,7 @@ cc_library(
         "triangular_solve_thunk.h",
         "tuple_thunk.h",
         "while_thunk.h",
-    ] + if_cuda_is_configured([,
+    ] + if_cuda_is_configured([
         "cholesky_thunk.h",
     ]),
     deps = [
