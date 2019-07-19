@@ -32,7 +32,9 @@ using absl::StrCat;
 // Wrapper structure for carrying llvm intrinsic ids for NVPTX/AMDGPU platforms.
 struct TargetIntrinsics {
   llvm::Intrinsic::ID nvptx_intrinsic;
-  llvm::Intrinsic::ID amdgpu_intrinsic;
+  absl::variant<llvm::Intrinsic::ID,
+                std::function<llvm::Value*(llvm::IRBuilder<>*)>>
+      amdgpu_intrinsic_or_function;
 };
 
 // Gets the llvm intrinsic ids on different platforms (NVPTX, AMDGPU)
@@ -66,6 +68,30 @@ struct TargetIntrinsics GetIntrinsic(TargetIntrinsicID intrin) {
     case TargetIntrinsicID::kBarrierId: {
       return {llvm::Intrinsic::nvvm_barrier0,
               llvm::Intrinsic::amdgcn_s_barrier};
+    }
+    case TargetIntrinsicID::kBlockDimx: {
+      return {llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+              [](llvm
+                 : IRBuilder<>* b_) -> llvm::Value* {
+                return GpuElementalIrEmitter::EmitDeviceFunctionCall(
+                    "__ockl_get_local_size", {b_->getInt32(0)}, {U32}, U64, {});
+              }};
+    }
+    case TargetIntrinsicID::kBlockDimy: {
+      return {llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_y,
+              [](llvm
+                 : IRBuilder<>* b_) -> llvm::Value* {
+                return GpuElementalIrEmitter::EmitDeviceFunctionCall(
+                    "__ockl_get_local_size", {b_->getInt32(1)}, {U32}, U64, {});
+              }};
+    }
+    case TargetIntrinsicID::kBlockDimz: {
+      return {llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_z,
+              [](llvm
+                 : IRBuilder<>* b_) -> llvm::Value* {
+                return GpuElementalIrEmitter::EmitDeviceFunctionCall(
+                    "__ockl_get_local_size", {b_->getInt32(1)}, {U32}, U64, {});
+              }};
     }
   }
 }
@@ -167,7 +193,15 @@ llvm::CallInst* EmitCallToTargetIntrinsic(
   if (target_triple.isNVPTX()) {
     llvm_intrinsic_id = gpu_intrinsic_id.nvptx_intrinsic;
   } else if (target_triple.getArch() == llvm::Triple::amdgcn) {
-    llvm_intrinsic_id = gpu_intrinsic_id.amdgpu_intrinsic;
+    llvm::Intrinsic::ID* llvm_intrinsic_id_ptr;
+    if (llvm_intrinsic_id_ptr = absl::get_if<llvm::Intrinsics::ID>(&gpu_intrinsic_id.amdgpu_intrinsic_or_function) {
+      llvm_intrinsic_id = *llvm_intrinsic_id;
+    } else {
+      std::function<llvm::Value*(llvm::IRBuilder<>*)> builder_func =
+          absl::get_if<std::function<llvm::Value*(llvm::IRBuilder<>*)>>(
+              &gpu_intrinsic_id.amdgpu_intrinsic_or_function);
+      return builder_func(b);
+    }
   } else {
     LOG(FATAL) << "Invalid triple " << target_triple.str();
   }

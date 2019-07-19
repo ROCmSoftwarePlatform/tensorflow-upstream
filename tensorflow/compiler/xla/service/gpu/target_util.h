@@ -39,6 +39,9 @@ enum class TargetIntrinsicID {
   kBlockIdy,
   kBlockIdz,
   kBarrierId,
+  kBlockDimx,
+  kBlockDimy,
+  kBlockDimz,
 };
 
 // Enumeration to get target specific device math function.

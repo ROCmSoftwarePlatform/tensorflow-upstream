@@ -72,8 +72,8 @@ ParallelLoopEmitter::EmitIndexAndSetExitBasicBlock(absl::string_view loop_name,
   VLOG(3) << "EmitIndexAndSetExitBasicBlock unroll_factor " << unroll_factor_;
   CHECK_NE(index_type, nullptr);
   std::vector<llvm_ir::IrArray::Index> array_indices;
-  llvm::Value* block_id = llvm_ir::EmitCallToIntrinsic(
-      llvm::Intrinsic::amdgcn_workgroup_id_x, {}, {}, b_);
+  llvm::Value* block_id =
+      EmitCallToTargetIntrinsic(TargetIntrinsicID::kBlockIdx, {}, {}, b_);
   llvm_ir::AddRangeMetadata(0, launch_dimensions_.block_count(),
                             static_cast<llvm::Instruction*>(block_id));
   block_id = b_->CreateZExtOrTrunc(block_id, index_type, "block_id");
@@ -82,8 +82,8 @@ ParallelLoopEmitter::EmitIndexAndSetExitBasicBlock(absl::string_view loop_name,
   //   "It is guaranteed that [...] 0  <=  %tid.x <  %ntid.x"
   //
   // %ntid.x is currently specified as 1024.
-  llvm::Value* thread_id = llvm_ir::EmitCallToIntrinsic(
-      llvm::Intrinsic::amdgcn_workitem_id_x, {}, {}, b_);
+  llvm::Value* thread_id =
+      EmitCallToTargetIntrinsic(TargetIntrinsicID::kThreadIdx, {}, {}, b_);
   llvm_ir::AddRangeMetadata(0, launch_dimensions_.threads_per_block(),
                             static_cast<llvm::Instruction*>(thread_id));
   thread_id = b_->CreateZExtOrTrunc(thread_id, index_type, "thread_id");

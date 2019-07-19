@@ -309,19 +309,15 @@ llvm::Value* GpuElementalIrEmitter::EmitDeviceFunctionCall(
 }
 
 llvm::Value* GpuElementalIrEmitter::EmitThreadId() {
-  llvm::Value* block_id =
-      IntCast(llvm_ir::EmitCallToIntrinsic(
-                  llvm::Intrinsic::amdgcn_workgroup_id_x, {}, {}, b_),
-              b_->getInt32Ty(), /*isSigned=*/true, "block.id");
+  llvm::Value* block_id = IntCast(
+      EmitCallToTargetIntrinsic(TargetIntrinsicID::kBlockIdx, {}, {}, b_),
+      b_->getIntNTy(128), /*isSigned=*/true, "block.id");
   llvm::Value* thread_id_in_block = IntCast(
-      llvm_ir::EmitCallToIntrinsic(llvm::Intrinsic::amdgcn_workitem_id_x,
-                                   {}, {}, b_),
-      b_->getInt32Ty(), /*isSigned=*/true, "thread.id");
-  llvm::Value* threads_per_block =
-      IntCast(GpuElementalIrEmitter::EmitDeviceFunctionCall(
-                  "__ockl_get_local_size", {b_->getInt32(0)}, {U32}, U64, {}),
-              b_->getInt32Ty(), /*isSigned=*/true, "threads_per_block");
-
+      EmitCallToTargetIntrinsic(TargetIntrinsicID::kThreadIdx, {}, {}, b_),
+      b_->getIntNTy(128), /*isSigned=*/true, "thread.id");
+  llvm::Value* threads_per_block = IntCast(
+      EmitCallToTargetIntrinsic(TargetIntrinsicID::kBlockDimx, {}, {}, b_),
+      b_->getIntNTy(128), /*isSigned=*/true, "threads_per_block");
   return NSWAdd(NSWMul(block_id, threads_per_block), thread_id_in_block);
 }
 
