@@ -688,9 +688,9 @@ tf_cc_test(
 
 cc_library(
     name = "cusolver_context",
-    srcs = ["cusolver_context.cc"],
-    hdrs = ["cusolver_context.h"],
-    deps = [
+    srcs = if_cuda_is_configured(["cusolver_context.cc"]),
+    hdrs = if_cuda_is_configured(["cusolver_context.h"]),
+    deps = if_cuda_is_configured([
         # LINT.IfChange
         "@local_config_cuda//cuda:cublas_headers",
         # LINT.ThenChange(//tensorflow/copy.bara.sky:cublas_headers)
@@ -702,7 +702,7 @@ cc_library(
         "//tensorflow/core:stream_executor_no_cuda",
         "//tensorflow/stream_executor:blas",
         "//tensorflow/stream_executor/cuda:cusolver_lib",
-    ],
+    ]),
 )
 
 cc_library(
@@ -987,7 +987,6 @@ cc_library(
     ],
     deps = [
         ":cudnn_batchnorm_rewriter",
-        ":cudnn_conv_algorithm_picker",
         ":cudnn_conv_padding_legalization",
         ":cudnn_conv_rewriter",
         ":fusion_merger",

@@ -41,7 +41,9 @@ limitations under the License.
 #include "tensorflow/compiler/xla/service/dfs_hlo_visitor.h"
 #include "tensorflow/compiler/xla/service/gpu/backend_configs.pb.h"
 #include "tensorflow/compiler/xla/service/gpu/buffer_allocations.h"
-#include "tensorflow/compiler/xla/service/gpu/cholesky_thunk.h"
+#ifndef TENSORFLOW_USE_ROCM
+  #include "tensorflow/compiler/xla/service/gpu/cholesky_thunk.h"
+#endif
 #include "tensorflow/compiler/xla/service/gpu/collective_permute_thunk.h"
 #include "tensorflow/compiler/xla/service/gpu/conditional_thunk.h"
 #include "tensorflow/compiler/xla/service/gpu/convolution_thunk.h"
@@ -464,6 +466,7 @@ Status IrEmitterUnnested::HandleCustomCall(HloInstruction* custom_call) {
     return Status::OK();
   }
 
+#if !TENSORFLOW_USE_ROCM
   if (custom_call->custom_call_target() == kCusolverCholeskyCallTarget) {
     TF_ASSIGN_OR_RETURN(CholeskyOptions options,
                         custom_call->backend_config<CholeskyOptions>());
@@ -508,6 +511,7 @@ Status IrEmitterUnnested::HandleCustomCall(HloInstruction* custom_call) {
 
     return Status::OK();
   }
+#endif
 
   if (IsCublasGemm(*custom_call)) {
     AddThunkToThunkSequence(BuildGemmThunk(custom_call));
