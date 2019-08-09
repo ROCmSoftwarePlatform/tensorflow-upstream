@@ -1103,31 +1103,27 @@ cc_library(
 
 cc_library(
     name = "amdgpu_compiler",
-    srcs = if_rocm_is_configured([
-        "amdgpu_compiler_registration.cc",
-    ]),
-    deps = if_rocm_is_configured([
-        "amdgpu_compiler_impl",
-    ]),
+    srcs = [
+         "amdgpu_compiler_registration.cc",
+    ],
+    deps = [
+        ":amdgpu_compiler_impl",
+    ],
     alwayslink = True,  # Contains compiler registration
 )
 
 cc_library(
     name = "amdgpu_compiler_impl",
-    srcs = if_rocm_is_configured([
-        # TODO(whchung@gmail.com) : enable in the subsequent PR.
-        #"amdgpu_compiler.cc",
-    ]),
-    hdrs = if_rocm_is_configured([
-        # TODO(whchung@gmail.com): enable in the subsequent PR.
-        #"amdgpu_compiler.h"
-    ]),
-    deps = if_rocm_is_configured([
-        # TODO(whchung@gmail.com): Enable these after pending PRs get merged.
-        #":gpu_compiler_impl",
-        #":miopen_conv_algorithm_picker",
-        #"//tensorflow/core:rocm_rocdl_path",
-    ]),
+    srcs = [
+        "amdgpu_compiler.cc",
+    ],
+    hdrs = [
+        "amdgpu_compiler.h"
+    ],
+    deps = [
+        ":gpu_compiler_impl",
+        "//tensorflow/core/platform:rocm_rocdl_path",
+    ],
 )
 
 cc_library(
