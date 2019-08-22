@@ -57,10 +57,13 @@ limitations under the License.
 #include "tensorflow/core/util/use_cudnn.h"
 
 #if GOOGLE_CUDA
-#include "third_party/gpus/cudnn/cudnn.h"
 #include "tensorflow/core/kernels/conv_ops_gpu.h"
 #include "tensorflow/core/platform/stream_executor.h"
 #include "tensorflow/core/util/proto/proto_utils.h"
+#include "tensorflow/stream_executor/gpu_asm_opts.h"
+#include "tensorflow/stream_executor/redzone_allocator.h"
+#include "tensorflow/stream_executor/tf_allocator_adapter.h"
+#include "third_party/gpus/cudnn/cudnn.h"
 #endif  // GOOGLE_CUDA
 
 namespace tensorflow {
@@ -322,9 +325,23 @@ Status FindBestConvolveAlgorithm(const FusedConvParameters& params,
         "see if a warning log message was printed above.");
   }
 
+  se::TfAllocatorAdapter tf_allocator_adapter(
+      context->device()->GetAllocator({}), stream);
+  se::RedzoneAllocator rz_allocator(stream, &tf_allocator_adapter,
+                                    se::GpuAsmOpts());
+  se::DeviceMemory<T> output_ptr_rz(
+      WrapRedzoneBestEffort(&rz_allocator, output_ptr));
+
   std::vector<tensorflow::AutotuneResult> results;
   for (auto profile_algorithm : algorithms) {
     DnnScratchAllocator scratch_allocator(ConvolveScratchSize(), context);
+    se::RedzoneAllocator rz_scratch_allocator(
+        stream, &tf_allocator_adapter, se::GpuAsmOpts(),
+        /*memory_limit=*/ConvolveScratchSize());
+    se::ScratchAllocator* allocator_used =
+        !RedzoneCheckDisabled()
+            ? static_cast<se::ScratchAllocator*>(&rz_scratch_allocator)
+            : static_cast<se::ScratchAllocator*>(&scratch_allocator);
     se::dnn::ProfileResult profile_result;
 
     bool cudnn_launch_status =

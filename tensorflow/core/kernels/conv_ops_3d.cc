@@ -36,7 +36,12 @@ limitations under the License.
 #include "tensorflow/core/protobuf/autotuning.pb.h"
 #include "tensorflow/core/util/proto/proto_utils.h"
 using stream_executor::dnn::DimIndex;
-#endif
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+#if GOOGLE_CUDA
+#include "tensorflow/stream_executor/gpu_asm_opts.h"
+#include "tensorflow/stream_executor/redzone_allocator.h"
+#include "tensorflow/stream_executor/tf_allocator_adapter.h"
+#endif  // GOOGLE_CUDA
 
 namespace tensorflow {
 
@@ -436,6 +441,12 @@ struct LaunchConvOp<GPUDevice, T> {
     if (cudnn_use_autotune && !AutoTuneConv3d::GetInstance()->Find(
                                   conv_parameters, &algorithm_config)) {
 #if GOOGLE_CUDA
+      se::TfAllocatorAdapter tf_allocator_adapter(
+          ctx->device()->GetAllocator({}), stream);
+      se::RedzoneAllocator rz_allocator(stream, &tf_allocator_adapter,
+                                        se::GpuAsmOpts());
+      se::DeviceMemory<T> output_ptr_rz(
+          WrapRedzoneBestEffort(&rz_allocator, output_ptr));
       std::vector<AlgorithmDesc> algorithms;
       OP_REQUIRES(ctx,
                   stream->parent()->GetConvolveAlgorithms(
@@ -452,6 +463,13 @@ struct LaunchConvOp<GPUDevice, T> {
         // TODO(zhengxq): profile each algorithm multiple times to better
         // accuracy.
         DnnScratchAllocator scratch_allocator(ConvolveScratchSize, ctx);
+        se::RedzoneAllocator rz_scratch_allocator(
+            stream, &tf_allocator_adapter, se::GpuAsmOpts(),
+            /*memory_limit=*/ConvolveScratchSize);
+        se::ScratchAllocator* allocator_used =
+            !RedzoneCheckDisabled()
+                ? static_cast<se::ScratchAllocator*>(&rz_scratch_allocator)
+                : static_cast<se::ScratchAllocator*>(&scratch_allocator);
         ProfileResult profile_result;
         bool cudnn_launch_status =
             stream
