@@ -1103,7 +1103,7 @@ cc_library(
         "//tensorflow/stream_executor/cuda:cuda_diagnostics",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/types:optional",
-    ],
+    ]),
 )
 
 cc_library(
