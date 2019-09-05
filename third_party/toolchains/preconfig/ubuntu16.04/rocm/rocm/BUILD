@@ -14,6 +14,7 @@ cc_library(
     hdrs = [
         "rocm/rocm_config.h",
         ":miopen-include",
+        ":rccl-include",
         ":rocblas-include",
         ":rocfft-include",
         ":rocm-include",
@@ -79,6 +80,18 @@ cc_library(
     name = "miopen",
     srcs = ["rocm/lib/libMIOpen.so"],
     data = ["rocm/lib/libMIOpen.so"],
+    includes = [
+        ".",
+        "rocm/include",
+    ],
+    linkstatic = 1,
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "rccl",
+    srcs = ["rocm/lib/librccl.so"],
+    data = ["rocm/lib/librccl.so"],
     includes = [
         ".",
         "rocm/include",
@@ -340,6 +353,7 @@ genrule(
         "rocm/include/opencl1.2-c.pch",
         "rocm/include/opencl2.0-c.pch",
         "rocm/include/profiler/CXLActivityLogger/CXLActivityLogger.h",
+        "rocm/include/rccl.h",
         "rocm/include/rocblas-auxiliary.h",
         "rocm/include/rocblas-export.h",
         "rocm/include/rocblas-functions.h",
@@ -411,6 +425,14 @@ genrule(
 )
 
 genrule(
+    name = "rccl-include",
+    outs = [
+        "rocm/include/rccl/rccl.h",
+    ],
+    cmd = """cp -rLf "/opt/rocm/rccl/include/." "$(@D)/" """,
+)
+
+genrule(
     name = "rocm-lib",
     outs = [
         "rocm/lib/libhip_hcc.so",
@@ -418,10 +440,12 @@ genrule(
         "rocm/lib/librocfft.so",
         "rocm/lib/libhiprand.so",
         "rocm/lib/libMIOpen.so",
+        "rocm/lib/librccl.so",
     ],
     cmd = """cp -f "/opt/rocm/hip/lib/libhip_hcc.so" "$(location rocm/lib/libhip_hcc.so)" && \
 cp -f "/opt/rocm/rocblas/lib/librocblas.so.2.2.6.0" "$(location rocm/lib/librocblas.so)" && \
 cp -f "/opt/rocm/rocfft/lib/librocfft.so.0.9.3.0" "$(location rocm/lib/librocfft.so)" && \
 cp -f "/opt/rocm/hiprand/lib/libhiprand.so.1.8.2" "$(location rocm/lib/libhiprand.so)" && \
 cp -f "/opt/rocm/miopen/lib/libMIOpen.so.1" "$(location rocm/lib/libMIOpen.so)" """,
+cp -f "/opt/rocm/rccl/lib/librccl.so" "$(location rocm/lib/librccl.so)" """,
 )
