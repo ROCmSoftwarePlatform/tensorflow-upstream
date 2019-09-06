@@ -596,9 +596,9 @@ cc_library(
 )
 
 cc_library(
-    name = "cudnn_conv_algorithm_picker",
-    srcs = ["cudnn_conv_algorithm_picker.cc"],
-    hdrs = ["cudnn_conv_algorithm_picker.h"],
+    name = "gpu_conv_algorithm_picker",
+    srcs = ["gpu_conv_algorithm_picker.cc"],
+    hdrs = ["gpu_conv_algorithm_picker.h"],
     deps = [
         ":backend_configs",
         ":buffer_comparator",
@@ -977,7 +977,7 @@ cc_library(
     ],
     deps = [
         ":cudnn_batchnorm_rewriter",
-        ":cudnn_conv_algorithm_picker",
+        ":gpu_conv_algorithm_picker",
         ":cudnn_conv_padding_legalization",
         ":cudnn_conv_rewriter",
         ":fusion_merger",
@@ -1080,7 +1080,7 @@ cc_library(
     ]),
     deps = if_cuda_is_configured([
         ":cublas_gemm_pad_for_tensor_cores",
-        ":cudnn_conv_algorithm_picker",
+        ":gpu_conv_algorithm_picker",
         ":cudnn_conv_pad_for_tensor_cores",
         ":cudnn_conv_padding_legalization",
         ":cudnn_conv_rewriter",

@@ -364,9 +364,9 @@ static StatusOr<bool> DeviceCompare(se::Stream* stream,
   uint64 buffer_size = lhs_typed.ElementCount();
 
   TF_ASSIGN_OR_RETURN(absl::Span<const uint8> compiled_ptx,
-                      se::CompileGpuAsmOrGetCached(executor->device_ordinal(),
-                                                   buffer_compare_ptx,
-                                                   PtxOptsFromConfig(config)));
+                      se::CompileGpuAsmOrGetCached(
+                          executor->device_ordinal(), buffer_compare_ptx,
+                          GpuAsmOptsFromConfig(config)));
 
   TF_ASSIGN_OR_RETURN(
       std::unique_ptr<ComparisonKernelT<ElementT>> comparison_kernel,

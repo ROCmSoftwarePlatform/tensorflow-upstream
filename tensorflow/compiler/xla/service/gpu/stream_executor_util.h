@@ -75,7 +75,7 @@ Status ExecuteKernelOnStream(const se::KernelBase& kernel,
                              se::Stream* stream);
 
 // Create GpuAsmOpts out of HloModuleConfig.
-se::GpuAsmOpts PtxOptsFromConfig(const HloModuleConfig& hlo_module_config);
+se::GpuAsmOpts GpuAsmOptsFromConfig(const HloModuleConfig& hlo_module_config);
 
 // Initializes `buffer` with random data on `stream`.
 // `rng_state` is an inout parameter for the pseudorandom generator state.
