@@ -578,10 +578,6 @@ template struct LaunchConv2DOp<CPUDevice, float>;
 template struct LaunchConv2DOp<CPUDevice, double>;
 
 #if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
-static bool RedzoneCheckDisabled() {
-  const char* disable_rz_str = std::getenv("TF_DISABLE_RZ_CHECK");
-  return disable_rz_str != nullptr && std::strcmp(disable_rz_str, "1") == 0;
-}
 
 int64 GetDnnWorkspaceLimit(const string& envvar_in_mb,
                            int64 default_value_in_bytes) {

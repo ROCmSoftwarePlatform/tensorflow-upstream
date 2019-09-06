@@ -274,7 +274,7 @@ StatusOr<AutotuneResult> CudnnConvAlgorithmPicker::PickBestAlgorithmNoCache(
 
   // Allocate space for the input, filter, and output of the convolution.
   se::RedzoneAllocator input_output_allocator(
-      stream, allocator, PtxOptsFromConfig(hlo_module_config));
+      &stream, allocator, PtxOptsFromConfig(hlo_module_config));
   std::vector<se::DeviceMemoryBase> operand_buffers;
   for (const auto* operand : instr->operands()) {
     TF_ASSIGN_OR_RETURN(auto buffer,
@@ -327,7 +327,7 @@ StatusOr<AutotuneResult> CudnnConvAlgorithmPicker::PickBestAlgorithmNoCache(
     }
 
     se::RedzoneAllocator scratch_allocator(
-        stream, allocator, PtxOptsFromConfig(hlo_module_config));
+        &stream, allocator, PtxOptsFromConfig(hlo_module_config));
     se::dnn::ProfileResult profile_result;
     VLOG(3) << "Trying algorithm " << AlgorithmToString(alg) << " for "
             << instr->ToString();
