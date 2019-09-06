@@ -24,7 +24,7 @@ limitations under the License.
 
 namespace tensorflow {
 
-string ROCmRoot() {
+string RocmRoot() {
 #if TENSORFLOW_USE_ROCM
   VLOG(3) << "ROCM root = " << TF_ROCM_TOOLKIT_PATH;
   return TF_ROCM_TOOLKIT_PATH;

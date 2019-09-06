@@ -4544,7 +4544,7 @@ tf_cc_test_gpu(
     tags = tf_gpu_tests_tags(),
     deps = [
         ":lib",
-        ":rocm_rocdl_path",
+        "//tensorflow/core/platform:rocm_rocdl_path",
         ":test",
         ":test_main",
     ],

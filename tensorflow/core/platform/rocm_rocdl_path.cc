@@ -19,8 +19,8 @@ limitations under the License.
 
 namespace tensorflow {
 
-string ROCDLRoot() {
-  return tensorflow::io::JoinPath(tensorflow::ROCmRoot(), "hcc/lib");
+string RocdlRoot() {
+  return tensorflow::io::JoinPath(tensorflow::RocmRoot(), "hcc/lib");
 }
 
 }  // namespace tensorflow

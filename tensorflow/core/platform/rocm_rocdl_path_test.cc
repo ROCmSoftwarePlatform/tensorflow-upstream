@@ -23,12 +23,11 @@ limitations under the License.
 namespace tensorflow {
 
 #if TENSORFLOW_USE_ROCM
-TEST(ROCmROCDLPathTest, ROCDLPath) {
-  VLOG(2) << "ROCm-Deivce-Libs root = " << ROCDLRoot();
+TEST(RocmRocdlPathTest, ROCDLPath) {
+  VLOG(2) << "ROCm-Deivce-Libs root = " << RocdlRoot();
   std::vector<string> rocdl_files;
   TF_EXPECT_OK(Env::Default()->GetMatchingPaths(
-      io::JoinPath(ROCDLRoot(), "*.amdgcn.bc"),
-      &rocdl_files));
+      io::JoinPath(RocdlRoot(), "*.amdgcn.bc"), &rocdl_files));
   EXPECT_LT(0, rocdl_files.size());
 }
 #endif

@@ -22,10 +22,10 @@ namespace tensorflow {
 
 // Returns the root directory of the ROCM SDK, which contains sub-folders such
 // as bin, lib, and rocdl.
-string ROCmRoot();
+string RocmRoot();
 
 // Returns the directory that contains ROCm-Device-Libs files in the ROCm SDK.
-string ROCDLRoot();
+string RocdlRoot();
 
 }  // namespace tensorflow
 
