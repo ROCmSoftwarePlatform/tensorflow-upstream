@@ -3,6 +3,10 @@ load(
     "//tensorflow/core/platform:default/cuda_build_defs.bzl",
     "if_cuda_is_configured",
 )
+load(
+    "@local_config_rocm//rocm:build_defs.bzl",
+    "if_rocm_is_configured",
+)
 load("//tensorflow/compiler/xla:xla.bzl", "xla_proto_library", "xla_py_proto_library")
 load("//tensorflow:tensorflow.bzl", "tf_portable_proto_library")
 
@@ -186,6 +190,8 @@ cc_library(
         "xla_resource.cc",
         "xla_cpu_backend.cc",
     ] + if_cuda_is_configured([
+        "xla_gpu_backend.cc",
+    ]) + if_rocm_is_configured([
         "xla_gpu_backend.cc",
     ]),
     hdrs = [
