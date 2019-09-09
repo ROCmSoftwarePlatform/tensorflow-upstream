@@ -153,7 +153,10 @@ py_test(
     srcs = ["tf_upgrade_v2_test.py"],
     python_version = "PY2",
     srcs_version = "PY2AND3",
-    tags = ["v1only"],
+    tags = [
+        "v1only",
+        "no_rocm_v2"
+    ],
     deps = [
         ":tf_upgrade_v2_lib",
         "//tensorflow:tensorflow_py",
@@ -237,7 +240,10 @@ py_test(
     srcs = ["testdata/test_file_v1_12.py"],
     python_version = "PY2",
     srcs_version = "PY2AND3",
-    tags = ["v1only"],
+    tags = [
+        "v1only",
+        "no_rocm_v2",
+    ],
     deps = [
         "//tensorflow:tensorflow_py",
     ],

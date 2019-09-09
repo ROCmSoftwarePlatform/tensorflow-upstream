@@ -1444,6 +1444,7 @@ tf_py_test(
         "no_pip",
         "no_windows",
         "v1only",
+        "no_rocm_v2",
     ],
 )
 

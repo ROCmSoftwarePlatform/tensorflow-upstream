@@ -659,6 +659,11 @@ py_test(
     srcs = ["wrappers/framework_test.py"],
     python_version = "PY2",
     srcs_version = "PY2AND3",
+    tags = [
+        "no_cuda",
+        "no_rocm",
+        "no_rocm_v2",
+    ],
     deps = [
         ":debug_data",
         ":framework",
