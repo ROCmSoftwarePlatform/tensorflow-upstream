@@ -17,6 +17,8 @@ load(
     "tf_additional_minimal_lib_srcs",
     "tf_additional_monitoring_srcs",
     "tf_additional_proto_hdrs",
+    "tf_additional_rocdl_deps",
+    "tf_additional_rocdl_srcs",
     "tf_additional_test_srcs",
     "tf_env_time_srcs",
     "tf_logging_absl_deps",
@@ -50,6 +52,16 @@ cc_library(
 cc_library(
     name = "macros",
     hdrs = ["macros.h"],
+)
+
+cc_library(
+    name = "rocm_rocdl_path",
+    srcs = ["rocm_rocdl_path.cc"] + tf_additional_rocdl_srcs(),
+    hdrs = ["rocm_rocdl_path.h"],
+    deps = [
+        ":types",
+        "//tensorflow/core:lib",
+    ] + tf_additional_rocdl_deps(),
 )
 
 cc_library(
@@ -144,6 +156,7 @@ filegroup(
             "**/cuda.h",
             "**/cuda_libdevice_path.cc",
             "**/rocm.h",
+            "**/rocm_rocdl_path.cc",
             "**/monitoring.cc",
             "**/stream_executor.h",
             "**/env_time.cc",
@@ -188,6 +201,7 @@ filegroup(
             # :platform_base, a common dependency for downstream targets.
             "**/env_time.cc",
             "**/logging.cc",
+            "**/rocm_rocdl_path.*",
             "default/test_benchmark.*",
             "cuda.h",
             "rocm.h",
@@ -239,6 +253,7 @@ filegroup(
             "**/logger.cc",
             "**/logging.cc",
             "**/human_readable_json.cc",
+            "**/rocm_rocdl_path.cc",
             "abi.cc",
             "cpu_info.cc",
             "platform_strings.cc",

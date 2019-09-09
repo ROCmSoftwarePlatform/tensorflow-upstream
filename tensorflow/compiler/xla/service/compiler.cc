@@ -103,6 +103,8 @@ Compiler::GetPlatformCompilers() {
       hint = " (hint: try linking in tensorflow/compiler/jit:xla_cpu_jit)";
     } else if (platform->Name() == "CUDA") {
       hint = " (hint: try linking in tensorflow/compiler/jit:xla_gpu_jit)";
+    } else if (platform->Name() == "ROCm") {
+      hint = " (hint: try linking in tensorflow/compiler/jit:xla_gpu_jit)";
     }
 
     return NotFound(

@@ -41,7 +41,14 @@ limitations under the License.
 #if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 #include "tensorflow/core/platform/stream_executor.h"
 using stream_executor::dnn::DimIndex;
-#endif
+#include "tensorflow/core/protobuf/autotuning.pb.h"
+#include "tensorflow/core/util/proto/proto_utils.h"
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+#if GOOGLE_CUDA
+#include "tensorflow/stream_executor/gpu_asm_opts.h"
+#include "tensorflow/stream_executor/redzone_allocator.h"
+#include "tensorflow/stream_executor/tf_allocator_adapter.h"
+#endif  // GOOGLE_CUDA
 
 namespace {
 
@@ -1358,6 +1365,12 @@ class Conv3DBackpropInputOp<GPUDevice, T> : public OpKernel {
     if (cudnn_use_autotune_ && !AutoTuneConv3dBwdData::GetInstance()->Find(
                                    conv_parameters, &algorithm_config)) {
 #if GOOGLE_CUDA
+      se::TfAllocatorAdapter tf_allocator_adapter(
+          context->device()->GetAllocator({}), stream);
+      se::RedzoneAllocator rz_allocator(stream, &tf_allocator_adapter,
+                                        se::GpuAsmOpts());
+      se::DeviceMemory<T> in_backprop_ptr_rz(
+          WrapRedzoneBestEffort(&rz_allocator, in_backprop_ptr));
       std::vector<AlgorithmDesc> algorithms;
       CHECK(stream->parent()->GetConvolveBackwardDataAlgorithms(
           conv_parameters.ShouldIncludeWinogradNonfusedAlgo<T>(
@@ -1370,6 +1383,13 @@ class Conv3DBackpropInputOp<GPUDevice, T> : public OpKernel {
         // accuracy.
         DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize,
                                               context);
+        se::RedzoneAllocator rz_scratch_allocator(
+            stream, &tf_allocator_adapter, se::GpuAsmOpts(),
+            /*memory_limit=*/ConvolveBackwardDataScratchSize);
+        se::ScratchAllocator* allocator_used =
+            !RedzoneCheckDisabled()
+                ? static_cast<se::ScratchAllocator*>(&rz_scratch_allocator)
+                : static_cast<se::ScratchAllocator*>(&scratch_allocator);
         ProfileResult profile_result;
         bool cudnn_launch_status =
             stream

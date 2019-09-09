@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow/stream_executor/cuda/ptxas_utils.h"
+#include "tensorflow/stream_executor/gpu_asm_opts.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_format.h"
@@ -21,30 +21,37 @@ limitations under the License.
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/gtl/cleanup.h"
 #include "tensorflow/core/lib/io/path.h"
-#include "tensorflow/core/platform/cuda_libdevice_path.h"
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/mutex.h"
 #include "tensorflow/core/platform/regexp.h"
 #include "tensorflow/core/platform/subprocess.h"
-#include "tensorflow/stream_executor/cuda/cuda_driver.h"
-#include "tensorflow/stream_executor/gpu/gpu_helpers.h"
 #include "tensorflow/stream_executor/lib/statusor.h"
 
-namespace stream_executor {
-namespace cuda {
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
+#include "tensorflow/stream_executor/gpu/gpu_helpers.h"
+#endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 
-#if defined(PLATFORM_WINDOWS)
-port::StatusOr<std::vector<uint8>> CompilePtx(int device_ordinal,
-                                              const char* ptx_contents,
-                                              PtxCompilationOptions options) {
+#if GOOGLE_CUDA
+#include "tensorflow/core/platform/cuda_libdevice_path.h"
+#include "tensorflow/stream_executor/cuda/cuda_driver.h"
+#endif  // GOOGLE_CUDA
+
+namespace stream_executor {
+
+#if !GOOGLE_CUDA || defined(PLATFORM_WINDOWS)
+
+port::StatusOr<std::vector<uint8>> CompileGpuAsm(int device_ordinal,
+                                                 const char* ptx_contents,
+                                                 GpuAsmOpts options) {
   // TODO(b/134675935): Subprocess invocation not supported on Windows.
-  return port::InternalError("Invoking ptxas not supported on Windows");
+  return port::InternalError(
+      "Invoking gpu asm compilation is supported on Cuda non-windows "
+      "platformat only");
 }
 
-port::StatusOr<absl::Span<const uint8>> CompilePtxOrGetCached(
-    int device_ordinal, const char* ptx,
-    PtxCompilationOptions compilation_options) {
-  return CompilePtx(device_ordinal, ptx, compilation_options);
+port::StatusOr<absl::Span<const uint8>> CompileGpuAsmOrGetCached(
+    int device_ordinal, const char* ptx, GpuAsmOpts compilation_options) {
+  return CompileGpuAsm(device_ordinal, ptx, compilation_options);
 }
 
 #else
@@ -123,11 +130,9 @@ static void WarnIfBadPtxasVersion(const string& ptxas_path) {
   }
 }
 
-port::StatusOr<absl::Span<const uint8>> CompilePtxOrGetCached(
-    int device_ordinal, const char* ptx,
-    PtxCompilationOptions compilation_options) {
-  using PtxCacheKey =
-      std::tuple<int, std::string, PtxCompilationOptions::PtxOptionsTuple>;
+port::StatusOr<absl::Span<const uint8>> CompileGpuAsmOrGetCached(
+    int device_ordinal, const char* ptx, GpuAsmOpts compilation_options) {
+  using PtxCacheKey = std::tuple<int, std::string, GpuAsmOpts::PtxOptionsTuple>;
   static tensorflow::mutex ptx_cache_mutex(tensorflow::LINKER_INITIALIZED);
   static auto& ptx_cache GUARDED_BY(ptx_cache_mutex) =
       *new absl::flat_hash_map<PtxCacheKey, std::vector<uint8>>();
@@ -137,8 +142,9 @@ port::StatusOr<absl::Span<const uint8>> CompilePtxOrGetCached(
                         compilation_options.ToTuple()};
   auto it = ptx_cache.find(cache_key);
   if (it == ptx_cache.end()) {
-    TF_ASSIGN_OR_RETURN(std::vector<uint8> compiled,
-                        CompilePtx(device_ordinal, ptx, compilation_options));
+    TF_ASSIGN_OR_RETURN(
+        std::vector<uint8> compiled,
+        CompileGpuAsm(device_ordinal, ptx, compilation_options));
     it = ptx_cache.emplace(cache_key, std::move(compiled)).first;
   }
 
@@ -147,15 +153,15 @@ port::StatusOr<absl::Span<const uint8>> CompilePtxOrGetCached(
   return absl::MakeSpan(compiled);
 }
 
-port::StatusOr<std::vector<uint8>> CompilePtx(int device_ordinal,
-                                              const char* ptx_contents,
-                                              PtxCompilationOptions options) {
+port::StatusOr<std::vector<uint8>> CompileGpuAsm(int device_ordinal,
+                                                 const char* ptx_contents,
+                                                 GpuAsmOpts options) {
   gpu::GpuDeviceHandle handle;
-  TF_RETURN_IF_ERROR(CUDADriver::GetDevice(device_ordinal, &handle));
+  TF_RETURN_IF_ERROR(gpu::GpuDriver::GetDevice(device_ordinal, &handle));
   int cc_major;
   int cc_minor;
   TF_RETURN_IF_ERROR(
-      CUDADriver::GetComputeCapability(&cc_major, &cc_minor, handle));
+      gpu::GpuDriver::GetComputeCapability(&cc_major, &cc_minor, handle));
 
   string ptxas_path;
   auto env = tensorflow::Env::Default();
@@ -202,7 +208,7 @@ port::StatusOr<std::vector<uint8>> CompilePtx(int device_ordinal,
   if (VLOG_IS_ON(2)) {
     ptxas_args.push_back("-v");
   }
-  if (options.disable_ptxas_optimizations) {
+  if (options.disable_gpuasm_optimizations) {
     ptxas_args.push_back("-O0");
   }
   ptxas_info_dumper.SetProgram(ptxas_path, ptxas_args);
@@ -228,7 +234,6 @@ port::StatusOr<std::vector<uint8>> CompilePtx(int device_ordinal,
   return cubin_vector;
 }
 
-#endif  // PLATFORM_WINDOWS
+#endif
 
-}  // namespace cuda
 }  // namespace stream_executor
