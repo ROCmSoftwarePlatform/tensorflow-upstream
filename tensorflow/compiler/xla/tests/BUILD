@@ -1087,7 +1087,7 @@ xla_test(
     timeout = "long",
     srcs = ["convolution_test.cc"],
     shard_count = 40,
-    tags = ["optonly"],
+    tags = ["optonly", "no_rocm"],
     deps = CONVOLUTION_TEST_DEPS + [
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -1104,7 +1104,7 @@ xla_test(
     args = ["--xla_gpu_disable_autotune"],
     backends = ["gpu"],
     shard_count = 40,
-    tags = ["optonly"],
+    tags = ["optonly", "no_rocm"],
     deps = CONVOLUTION_TEST_DEPS + [
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -1118,6 +1118,7 @@ xla_test(
     backend_args = {"gpu": ["--xla_backend_extra_options=xla_gpu_experimental_conv_disable_layout_heuristic"]},
     backends = ["gpu"],
     shard_count = 25,
+    tags = ["no_rocm"],
     deps = CONVOLUTION_TEST_DEPS + [
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -2512,7 +2513,7 @@ xla_test(
 xla_test(
     name = "cholesky_test",
     srcs = ["cholesky_test.cc"],
-    tags = ["optonly"],
+    tags = ["optonly", "no_rocm"],
     deps = [
         ":test_macros_header",
         "//tensorflow/compiler/xla:array2d",
