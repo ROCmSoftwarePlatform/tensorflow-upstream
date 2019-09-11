@@ -268,6 +268,11 @@ cc_test(
     srcs = ["interpreter_test.cc"],
     features = ["-dynamic_link_test_srcs"],  # see go/dynamic_link_test_srcs
     tags = [
+        "no_cuda",
+        "no_rocm",
+        "no_windows",
+        "noasan",
+        "nomsan",
         "tflite_not_portable_ios",  # TODO(b/117786830)
     ],
     deps = [

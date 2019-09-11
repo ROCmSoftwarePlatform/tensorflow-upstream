@@ -1379,7 +1379,8 @@ cc_library(
 tf_cc_test(
     name = "buffer_comparator_test",
     srcs = ["buffer_comparator_test.cc"],
-    tags = tf_cuda_tests_tags(),
+    tags = ["no_rocm"]
+    + tf_cuda_tests_tags(),
     deps = [
         ":buffer_comparator",
         "//tensorflow/compiler/xla:shape_util",
@@ -1434,7 +1435,8 @@ cc_library(
 tf_cc_test(
     name = "cudnn_fused_conv_rewriter_test",
     srcs = ["cudnn_fused_conv_rewriter_test.cc"],
-    tags = tf_cuda_tests_tags(),
+    tags = ["no_rocm"]
+    + tf_cuda_tests_tags(),
     deps = [
         ":ir_emission_utils",
         "//tensorflow/compiler/xla/service:hlo_parser",
