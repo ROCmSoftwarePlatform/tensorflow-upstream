@@ -747,7 +747,6 @@ tf_py_test(
         "@absl_py//absl/testing:parameterized",
         "//tensorflow/python:client_testlib",
     ],
-    tags = ["no_rocm"],
     shard_count = 11,
 )
 
@@ -1557,7 +1556,6 @@ tf_py_test(
     ],
     shard_count = 30,
     tags = [
-        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
 )
@@ -1701,8 +1699,6 @@ tf_py_test(
     python_version = "PY3",
     shard_count = 8,
     tags = [
-        "no_cuda",
-        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
 )
@@ -1716,7 +1712,6 @@ tf_py_test(
         "//tensorflow/python:client_testlib",
     ],
     tags = [
-        "no_rocm",
         "nomac",  # TODO(mihaimaruseac): b/127695564
     ],
 )
