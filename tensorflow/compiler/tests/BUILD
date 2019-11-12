@@ -1222,15 +1222,10 @@ cuda_py_test(
         "//tensorflow/python:nn_ops",
     ],
     shard_count = 5,
-<<<<<<< HEAD
     tags = [
-        # TODO(b/134780716): Re-enable this test.
+        # keep no_rocm tag, re-evaluate after roctracer been enabled.
         "no_rocm",
-        "nogpu",
-        "no_cuda_on_cpu_tap",
     ],
-=======
->>>>>>> upstream/master
     xla_enable_strict_auto_jit = False,
 )
 
