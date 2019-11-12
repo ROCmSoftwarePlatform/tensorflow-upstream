@@ -138,7 +138,7 @@ static void Print(ConstOp op, OpAsmPrinter* printer) {
 }
 
 static ParseResult ParseConstOp(OpAsmParser* parser, OperationState* result) {
-  if (parser->parseOptionalAttributeDict(result->attributes)) return failure();
+  if (parser->parseOptionalAttrDict(result->attributes)) return failure();
 
   // If colon is not present after attribute dictionary, it should be short form
   // and attribute 'value' is outside the dictionary.
@@ -618,28 +618,8 @@ LogicalResult ReduceOp::fold(ArrayRef<Attribute> operands,
 //===----------------------------------------------------------------------===//
 
 static LogicalResult Verify(SelectOp op) {
-  auto onTrueType = op.on_true()->getType().cast<RankedTensorType>();
-  auto onFalseType = op.on_false()->getType().cast<RankedTensorType>();
-
-  if (onTrueType != onFalseType) {
-    return op.emitOpError(
-        llvm::formatv("on_true type ({0}) does not match on_false type ({1})",
-                      onTrueType, onFalseType));
-  }
-
-  auto predType = op.pred()->getType().cast<RankedTensorType>();
-  auto predShape = predType.getShape();
-  auto predRank = predType.getRank();
-  auto selectShape = onTrueType.getShape();
-
-  if (predRank != 0 && predShape != selectShape) {
-    return op.emitOpError(llvm::formatv(
-        "pred shape ([{0}]) is not scalar and does not match operand shapes "
-        "([{1}])",
-        llvm::make_range(predShape.begin(), predShape.end()),
-        llvm::make_range(selectShape.begin(), selectShape.end())));
-  }
-
+  // TODO(jpienaar): Update to allow broadcastable and unranked inputs. This
+  // corresponds to the client side HLO.
   return success();
 }
 
@@ -773,15 +753,20 @@ static Type GetBroadcastType(Builder* builder, Type x, Type y,
   }
 
 BINARY_BUILDER(AddOp);
-BINARY_BUILDER(SubOp);
-BINARY_BUILDER(MulOp);
+BINARY_BUILDER(AndOp);
+BINARY_BUILDER(Atan2Op);
 BINARY_BUILDER(DivOp);
 BINARY_BUILDER(MaxOp);
 BINARY_BUILDER(MinOp);
-BINARY_BUILDER(AndOp);
+BINARY_BUILDER(MulOp);
 BINARY_BUILDER(OrOp);
-BINARY_BUILDER(RemOp);
 BINARY_BUILDER(PowOp);
+BINARY_BUILDER(RemOp);
+BINARY_BUILDER(ShiftLeftOp);
+BINARY_BUILDER(ShiftRightArithmeticOp);
+BINARY_BUILDER(ShiftRightLogicalOp);
+BINARY_BUILDER(SubOp);
+BINARY_BUILDER(XorOp);
 
 #undef BINARY_BUILDER
 

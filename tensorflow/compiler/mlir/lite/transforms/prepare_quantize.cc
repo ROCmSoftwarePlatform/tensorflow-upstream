@@ -81,6 +81,11 @@ class PrepareQuantizePass : public FunctionPass<PrepareQuantizePass> {
   // ranges.
   bool SetInputNodesQuantizationParams(FuncOp func);
 
+  // The function might contain more stats ops than required, and it will
+  // introduce requantize if the calibration stats have conflicts. This method
+  // tries to remove all the redundant stats ops.
+  bool RemoveRedundantStats(FuncOp func);
+
   // Verify the quantization specification is expected for quantizing the
   // current function.
   bool IsLegalQuantSpecs(FuncOp func) {
@@ -135,8 +140,8 @@ bool PrepareQuantizePass::SetInputNodesQuantizationParams(FuncOp func) {
         auto min_max = GetMinMaxValuesForArgument(func_name, i);
         TypeAttr params = GetQuantizedTypeAttr(
             builder, input_type, builder.getF64FloatAttr(min_max.first),
-            builder.getF64FloatAttr(min_max.second), num_bits, narrow_range,
-            is_signed);
+            builder.getF64FloatAttr(min_max.second), /*quant_dim=*/-1, num_bits,
+            narrow_range, is_signed);
         builder.setInsertionPoint(block, insertion_point);
         auto q_op = builder.create<TFL::QuantizeOp>(loc, params.getValue(), arg,
                                                     params);
@@ -150,19 +155,9 @@ bool PrepareQuantizePass::SetInputNodesQuantizationParams(FuncOp func) {
 
   for (int i = 0, e = func.getNumArguments(); i != e; ++i) {
     BlockArgument* arg = func.getArgument(i);
-    if (arg->hasOneUse() && llvm::isa<TFL::InputOp>(*arg->getUsers().begin())) {
-      // TODO(lyandy): Remove arg -> tfl.pseudo_input -> tfl.quantize once
-      // tfl.pseudo_input are not generated.
-      Operation* input = *arg->getUsers().begin();
-      auto input_op = llvm::cast<TFL::InputOp>(input);
-      add_quantize_op(input_op.getLoc(), input_op.input()->getType(),
-                      input->getBlock(), ++Block::iterator(input_op),
-                      input_op.output(), i);
-    } else {
-      auto* arg_block = arg->getOwner();
-      add_quantize_op(arg->getLoc(), arg->getType(), arg_block,
-                      std::next(arg_block->begin(), i), arg, i);
-    }
+    auto* arg_block = arg->getOwner();
+    add_quantize_op(arg->getLoc(), arg->getType(), arg_block,
+                    std::next(arg_block->begin(), i), arg, i);
   }
 
   return false;
@@ -170,19 +165,26 @@ bool PrepareQuantizePass::SetInputNodesQuantizationParams(FuncOp func) {
 
 #include "tensorflow/compiler/mlir/lite/utils/generated_op_quant_spec_getters.inc"
 
+bool PrepareQuantizePass::RemoveRedundantStats(FuncOp func) {
+  return RemoveRedundantStatsOps(func, GetOpQuantSpec);
+}
+
 using PrepareQuantStats =
     TFL::ConvertStatsToQDQs<TFL::QuantizeOp, TFL::DequantizeOp>;
 
 void PrepareQuantizePass::runOnFunction() {
   FuncOp func = getFunction();
   MLIRContext* ctx = func.getContext();
-  // Set the quantization parameters for the quantizable input nodes. If this
-  // failed, return the function immediately. This is only required for
-  // quantization aware training model conversion.
-  // TODO(fengliuai): send the signal to the pass manager.
-  if (!quant_specs_.post_training_quantization &&
-      SetInputNodesQuantizationParams(func)) {
-    return;
+
+  if (quant_specs_.post_training_quantization) {
+    RemoveRedundantStats(func);
+  } else {
+    // Set the quantization parameters for the quantizable input nodes. If this
+    // failed, return the function immediately. This is only required for
+    // quantization aware training model conversion.
+    if (SetInputNodesQuantizationParams(func)) {
+      return;
+    }
   }
 
   // During the legalization, unsigned quantized type is used, so we have to

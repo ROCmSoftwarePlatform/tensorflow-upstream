@@ -12,14 +12,13 @@ load(
     "//tensorflow/core/platform:default/build_config.bzl",
     "tf_additional_lib_hdrs",
     "tf_additional_lib_srcs",
-    "tf_additional_libdevice_srcs",
     "tf_additional_monitoring_srcs",
     "tf_additional_proto_hdrs",
     "tf_additional_tensor_coding_deps",
     "tf_additional_test_srcs",
+    "tf_fingerprint_deps",
     "tf_protobuf_compiler_deps",
     "tf_protobuf_deps",
-    "tf_fingerprint_deps",
 )
 load(
     "//tensorflow/core/platform:default/build_refactor.bzl",
@@ -30,6 +29,7 @@ load(
 )
 load(
     "//tensorflow:tensorflow.bzl",
+    "if_not_android",
     "tf_copts",  # @unused
 )
 load(
@@ -476,6 +476,7 @@ cc_library(
     hdrs = ["str_util.h"],
     deps = [
         ":logging",
+        ":macros",
         ":stringpiece",
         ":types",
         "@com_google_absl//absl/strings",
@@ -636,7 +637,6 @@ cc_binary(
         ":png",
         ":prefetch",
         ":protobuf",
-        ":rocm_rocdl_path",
         ":scanner",
         ":setround",
         ":stacktrace",
@@ -653,7 +653,7 @@ cc_binary(
         ":threadpool_options",
         ":tstring",
         ":types",
-    ],
+    ] + if_not_android([":rocm_rocdl_path"]),
 )
 
 # --------------------------------------------------------------------------
@@ -830,12 +830,6 @@ filegroup(
 filegroup(
     name = "legacy_test_srcs",
     srcs = tf_additional_test_srcs(),
-    visibility = ["//tensorflow/core:__pkg__"],
-)
-
-filegroup(
-    name = "legacy_libdevice_srcs",
-    srcs = tf_additional_libdevice_srcs(),
     visibility = ["//tensorflow/core:__pkg__"],
 )
 

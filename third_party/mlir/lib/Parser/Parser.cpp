@@ -1400,7 +1400,7 @@ static std::string extractSymbolReference(Token tok) {
 ///                    | type
 ///                    | `[` (attribute-value (`,` attribute-value)*)? `]`
 ///                    | `{` (attribute-entry (`,` attribute-entry)*)? `}`
-///                    | symbol-ref-id
+///                    | symbol-ref-id (`::` symbol-ref-id)*
 ///                    | `dense` `<` attribute-value `>` `:`
 ///                      (tensor-type | vector-type)
 ///                    | `sparse` `<` attribute-value `,` attribute-value `>`
@@ -1509,7 +1509,31 @@ Attribute Parser::parseAttribute(Type type) {
   case Token::at_identifier: {
     std::string nameStr = extractSymbolReference(getToken());
     consumeToken(Token::at_identifier);
-    return builder.getSymbolRefAttr(nameStr);
+
+    // Parse any nested references.
+    std::vector<FlatSymbolRefAttr> nestedRefs;
+    while (getToken().is(Token::colon)) {
+      // Check for the '::' prefix.
+      const char *curPointer = getToken().getLoc().getPointer();
+      consumeToken(Token::colon);
+      if (!consumeIf(Token::colon)) {
+        state.lex.resetPointer(curPointer);
+        consumeToken();
+        break;
+      }
+      // Parse the reference itself.
+      auto curLoc = getToken().getLoc();
+      if (getToken().isNot(Token::at_identifier)) {
+        emitError(curLoc, "expected nested symbol reference identifier");
+        return Attribute();
+      }
+
+      std::string nameStr = extractSymbolReference(getToken());
+      consumeToken(Token::at_identifier);
+      nestedRefs.push_back(SymbolRefAttr::get(nameStr, getContext()));
+    }
+
+    return builder.getSymbolRefAttr(nameStr, nestedRefs);
   }
 
   // Parse a 'unit' attribute.
@@ -1533,7 +1557,7 @@ Attribute Parser::parseAttribute(Type type) {
 ///
 ParseResult
 Parser::parseAttributeDict(SmallVectorImpl<NamedAttribute> &attributes) {
-  if (!consumeIf(Token::l_brace))
+  if (parseToken(Token::l_brace, "expected '{' in attribute dictionary"))
     return failure();
 
   auto parseElt = [&]() -> ParseResult {
@@ -3868,8 +3892,17 @@ public:
 
   /// Parse a named dictionary into 'result' if it is present.
   ParseResult
-  parseOptionalAttributeDict(SmallVectorImpl<NamedAttribute> &result) override {
+  parseOptionalAttrDict(SmallVectorImpl<NamedAttribute> &result) override {
     if (parser.getToken().isNot(Token::l_brace))
+      return success();
+    return parser.parseAttributeDict(result);
+  }
+
+  /// Parse a named dictionary into 'result' if the `attributes` keyword is
+  /// present.
+  ParseResult parseOptionalAttrDictWithKeyword(
+      SmallVectorImpl<NamedAttribute> &result) override {
+    if (failed(parseOptionalKeyword("attributes")))
       return success();
     return parser.parseAttributeDict(result);
   }

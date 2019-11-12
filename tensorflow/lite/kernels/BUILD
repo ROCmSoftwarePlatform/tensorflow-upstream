@@ -544,6 +544,7 @@ cc_library(
         "@farmhash_archive//:farmhash",
         "@flatbuffers",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -599,6 +600,7 @@ cc_library(
     srcs = ["lstm_eval.cc"],
     hdrs = ["lstm_eval.h"],
     deps = [
+        ":cpu_backend_context",
         ":op_macros",
         "//tensorflow/lite/c:c_api_internal",
         "//tensorflow/lite/kernels/internal:compatibility",
@@ -623,6 +625,7 @@ cc_library(
         "//tensorflow/lite:framework",
         "//tensorflow/lite/c:c_api_internal",
     ],
+    alwayslink = 1,
 )
 
 # The builtin_ops target will resolve to optimized kernels when available. This

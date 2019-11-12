@@ -4,10 +4,17 @@ load(
     "if_cuda_is_configured",
 )
 load(
+<<<<<<< HEAD
     "@local_config_rocm//rocm:build_defs.bzl",
     "if_rocm_is_configured",
 )
 load("//tensorflow/compiler/xla:xla.bzl", "xla_proto_library", "xla_py_proto_library")
+=======
+    "//tensorflow/core/platform:default/build_config.bzl",
+    "tf_proto_library_cc",
+)
+load("//tensorflow/compiler/xla:xla.bzl", "xla_py_proto_library")
+>>>>>>> upstream/master
 load("//tensorflow:tensorflow.bzl", "tf_portable_proto_library")
 load("@local_config_rocm//rocm:build_defs.bzl", "if_rocm_is_configured")
 
@@ -62,13 +69,14 @@ tf_cc_binary(
     deps = [":tf2xla_supported_ops_lib"],
 )
 
-xla_proto_library(
+tf_proto_library_cc(
     name = "tf2xla_proto",
     srcs = ["tf2xla.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//tensorflow/core:protos_all_cc",
+    cc_api_version = 2,
+    protodeps = [
+        "//tensorflow/core:protos_all",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # A proto library that is minimal in size and dependencies for platforms like Android.
@@ -79,7 +87,7 @@ tf_portable_proto_library(
     portable_deps = ["//tensorflow/core:android_proto_lib"],
     proto_deps = [
         ":tf2xla_proto",
-        "//tensorflow/core:protos_all_cc",
+        "//tensorflow/core:protos_all",
     ],
     visibility = ["//visibility:public"],
 )
@@ -92,13 +100,14 @@ xla_py_proto_library(
     deps = [":tf2xla_proto"],
 )
 
-xla_proto_library(
+tf_proto_library_cc(
     name = "host_compute_metadata_proto",
     srcs = ["host_compute_metadata.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//tensorflow/core:protos_all_cc",
+    cc_api_version = 2,
+    protodeps = [
+        "//tensorflow/core:protos_all",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -109,7 +118,7 @@ cc_library(
     deps = [
         ":functionalize_control_flow",
         ":sharding_util",
-        ":tf2xla_proto",
+        ":tf2xla_proto_cc",
         ":tf2xla_util",
         ":xla_compiler",
         "//tensorflow/compiler/xla:status_macros",
@@ -135,7 +144,7 @@ cc_library(
     deps = [
         ":common",
         ":graph_compiler_util",
-        ":tf2xla_proto",
+        ":tf2xla_proto_cc",
         ":tf2xla_util",
         ":xla_compiler",
         "//tensorflow/compiler/tf2xla/kernels:xla_ops",
@@ -183,7 +192,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":tf2xla",
-        ":tf2xla_proto",
+        ":tf2xla_proto_cc",
         ":xla_compiled_cpu_function",
         "//tensorflow/compiler/xla:cpu_function_runtime",
         "//tensorflow/compiler/xla:shape_util",
@@ -237,7 +246,7 @@ cc_library(
     deps = [
         ":common",
         ":frontend_attributes_util",
-        ":host_compute_metadata_proto",
+        ":host_compute_metadata_proto_cc",
         ":rearrange_function_argument",
         ":sharding_util",
         ":side_effect_util",
@@ -360,7 +369,7 @@ cc_library(
     visibility = [":friends"],
     deps = [
         ":sharding_util",
-        ":tf2xla_proto",
+        ":tf2xla_proto_cc",
         "//tensorflow/compiler/xla:status_macros",
         "//tensorflow/compiler/xla:xla_data_proto",
         "//tensorflow/core:core_cpu",
@@ -402,7 +411,7 @@ tf_cc_test(
     srcs = ["tf2xla_test.cc"],
     deps = [
         ":tf2xla",
-        ":tf2xla_proto",
+        ":tf2xla_proto_cc",
         "//tensorflow/compiler/xla:literal",
         "//tensorflow/compiler/xla:literal_util",
         "//tensorflow/compiler/xla:statusor",
@@ -422,7 +431,7 @@ tf_cc_test(
     name = "xla_jit_compiled_cpu_function_test",
     srcs = ["xla_jit_compiled_cpu_function_test.cc"],
     deps = [
-        ":tf2xla_proto",
+        ":tf2xla_proto_cc",
         ":xla_jit_compiled_cpu_function",
         "//tensorflow/compiler/xla:shape_util",
         "//tensorflow/compiler/xla:status_macros",

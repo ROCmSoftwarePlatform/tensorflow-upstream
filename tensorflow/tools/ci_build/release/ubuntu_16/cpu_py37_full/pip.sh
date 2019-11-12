@@ -19,6 +19,8 @@ set -x
 source tensorflow/tools/ci_build/release/common.sh
 
 install_ubuntu_16_pip_deps pip3.7
+# Update bazel
+update_bazel_linux
 
 # Export required variables for running pip.sh
 export OS_TYPE="UBUNTU"
@@ -44,7 +46,7 @@ export TF_TEST_TARGETS="${DEFAULT_BAZEL_TARGETS} -//tensorflow/lite/... "
 export TF_PIP_TESTS="test_pip_virtualenv_non_clean test_pip_virtualenv_clean"
 export TF_TEST_FILTER_TAGS='-no_oss,-oss_serial,-no_oss_py37,-v1only'
 export IS_NIGHTLY=0 # Not nightly
-export TF_PROJECT_NAME="tensorflow"
+export TF_PROJECT_NAME="tensorflow_cpu"
 export TF_PIP_TEST_ROOT="pip_test"
 
 ./tensorflow/tools/ci_build/builds/pip_new.sh

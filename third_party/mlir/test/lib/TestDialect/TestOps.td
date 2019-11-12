@@ -206,7 +206,7 @@ def UpdateFloatElementsAttr : Pat<
 
 def SymbolRefOp : TEST_Op<"symbol_ref_attr"> {
   let arguments = (ins
-    Confined<SymbolRefAttr, [ReferToOp<"FuncOp">]>:$symbol
+    Confined<FlatSymbolRefAttr, [ReferToOp<"FuncOp">]>:$symbol
   );
 }
 
@@ -232,7 +232,7 @@ def SizedRegionOp : TEST_Op<"sized_region_op", []> {
 
 def ConversionCallOp : TEST_Op<"conversion_call_op",
     [CallOpInterface]> {
-  let arguments = (ins Variadic<AnyType>:$inputs, SymbolRefAttr:$callee);
+  let arguments = (ins Variadic<AnyType>:$inputs, FlatSymbolRefAttr:$callee);
   let results = (outs Variadic<AnyType>);
 
   let extraClassDeclaration = [{
@@ -241,7 +241,7 @@ def ConversionCallOp : TEST_Op<"conversion_call_op",
 
     /// Return the callee of this operation.
     CallInterfaceCallable getCallableForCallee() {
-      return getAttrOfType<SymbolRefAttr>("callee");
+      return getAttrOfType<FlatSymbolRefAttr>("callee");
     }
   }];
 }
@@ -395,8 +395,9 @@ def I32ElementsAttrOp : TEST_Op<"i32ElementsAttr"> {
   let arguments = (ins I32ElementsAttr:$attr);
 }
 
-def OpWithInferTypeInterfaceOp : TEST_Op<"op_with_infer_type_if",
-    [DeclareOpInterfaceMethods<InferTypeOpInterface>]> {
+def OpWithInferTypeInterfaceOp : TEST_Op<"op_with_infer_type_if", [
+    DeclareOpInterfaceMethods<InferTypeOpInterface>,
+    InferTypeOpInterfaceDefault]> {
   let arguments = (ins AnyTensor, AnyTensor);
   let results = (outs AnyTensor);
 }
