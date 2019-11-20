@@ -364,6 +364,8 @@ tf_cuda_cc_test(
         "//tensorflow/core/grappler/inputs:trivial_test_graph_input_yielder",
         "//tensorflow/core/grappler/utils:grappler_test",
         "//tensorflow/core/grappler/utils:topological_sort",
+        "//tensorflow/core/platform:test",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -923,6 +925,7 @@ tf_cc_test(
         "//tensorflow/core/grappler:grappler_item",
         "//tensorflow/core/grappler:utils",
         "//tensorflow/core/grappler/inputs:trivial_test_graph_input_yielder",
+        "//tensorflow/core/grappler/utils:topological_sort",
     ],
 )
 

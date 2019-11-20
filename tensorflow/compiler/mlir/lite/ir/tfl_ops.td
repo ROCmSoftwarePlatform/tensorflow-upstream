@@ -265,7 +265,7 @@ class TFL_Op<string mnemonic, list<OpTrait> traits = []> :
 
 class TFL_ConvOp<string mnemonic, string opSummary, int index> :
     TFL_Op<mnemonic, [NoSideEffect, AccumulatorUniformScale<2, 0, 1>,
-    ChannelDimIndex<index>]> {
+    ChannelDimIndex<index>, AffineOpCoefficient<index, 1>]> {
   let summary = opSummary # " operator";
 
   let description = [{
@@ -546,6 +546,14 @@ def TFL_ConstOp : Op<TFL_Dialect, "pseudo_const", [NoSideEffect,
   let results = (outs AnyTensor:$output);
 
   let hasFolder = 1;
+
+  let builders = [OpBuilder<
+    "Builder *, OperationState &state, Attribute value",
+    [{
+      state.addAttribute("value", value);
+      state.addTypes(value.getType());
+    }]>
+  ];
 }
 
 def TFL_Conv2DOp : TFL_ConvOp<"conv_2d", "Convolution", 0>;
@@ -580,7 +588,8 @@ def TFL_FullyConnectedOptionsWeightFormatAttr :
 
 // TODO(jpienaar): Update post discussion on semantics of FC OP.
 def TFL_FullyConnectedOp : TFL_Op<"fully_connected", [
-    NoSideEffect, AccumulatorUniformScale<2, 0, 1>, ChannelDimIndex<0>]> {
+    NoSideEffect, AccumulatorUniformScale<2, 0, 1>, ChannelDimIndex<0>,
+    AffineOpCoefficient<-1, 1>]> {
   let summary = "Fully connected op";
 
   let arguments = (ins
@@ -1169,24 +1178,6 @@ def TFL_HardSwishOp: TFL_Op<"hard_swish", [NoSideEffect,
   let results = (outs TensorOf<[F32, QUI8, QI8]>:$out);
 
   let hasOptions = 0;
-}
-
-
-// NoSideEffect trait is not added to the op intentionally to prevent it from
-// getting removed if the input is unused. The generated FlatBuffer needs to
-// have a tensor along with the metadata for each of the subgraph inputs.
-def TFL_InputOp : Op<TFL_Dialect, "pseudo_input", [SameOperandsAndResultType]> {
-  let summary = "Input pseudo operator";
-
-  let description = [{
-    Takes one of the function arguments as input and returns it as result.  This
-    is a NOP and is used to attach attributes such as tensor name to function
-    arguments.
-  }];
-
-  let arguments = (ins AnyTensor:$input);
-
-  let results = (outs AnyTensor:$output);
 }
 
 def TFL_L2NormalizationOp : TFL_Op<"l2_normalization", [NoSideEffect,
@@ -2722,6 +2713,15 @@ def TFL_QConstOp : Op<TFL_Dialect, "pseudo_qconst", [
   );
 
   let results = (outs AnyTensor:$output);
+
+  let builders = [OpBuilder<
+    "Builder *, OperationState &state, TypeAttr qtype, Attribute value",
+    [{
+      state.addAttribute("qtype", qtype);
+      state.addAttribute("value", value);
+      state.addTypes(qtype.getValue());
+    }]>
+  ];
 }
 
 def TFL_QuantizeOp: TFL_Op<"quantize", [
