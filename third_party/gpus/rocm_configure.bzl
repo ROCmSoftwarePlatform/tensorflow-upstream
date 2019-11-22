@@ -498,7 +498,6 @@ def _find_libs(repository_ctx, rocm_config):
         "hipsparse": _find_rocm_lib(
             "hipsparse",
             repository_ctx,
-            cpu_value,
             rocm_config.rocm_toolkit_path + "/hipsparse",
         ),
     }
