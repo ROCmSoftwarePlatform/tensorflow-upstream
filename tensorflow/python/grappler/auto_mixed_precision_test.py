@@ -492,7 +492,7 @@ class AutoMixedPrecisionTest(test.TestCase):
         if not test.is_built_with_rocm:
           self._assert_output_fp16(node_map, 'FusedBatchNormV3')
           self._assert_output_fp16(node_map, 'dropout/mul')
-        self._assert_output_fp16(node_map, 'addition')
+          self._assert_output_fp16(node_map, 'addition')
         self._assert_output_fp16(node_map, 'Conv2D_1')
 
         output_val_ref, output_val, cost_graph = self._run(output)
