@@ -52,7 +52,7 @@ Please follow the instructions
 to set up your ROCm stack.
 
 A Docker container:
-**[rocm/tensorflow:latest](https://hub.docker.com/r/rocm/tensorflow/)**
+**[rocm/tensorflow:latest](https://hub.docker.com/r/rocm/tensorflow/tags)**
 is readily available to be used:
 ```
 $ alias drun='sudo docker run -it --network=host --device=/dev/kfd --device=/dev/dri --group-add video --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -v $HOME/dockerx:/dockerx'
