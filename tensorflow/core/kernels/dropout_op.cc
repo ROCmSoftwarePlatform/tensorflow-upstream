@@ -36,10 +36,7 @@ class DropoutOp : public OpKernel {
 
  public:
   explicit DropoutOp(OpKernelConstruction* context) : OpKernel(context) {
-    int64 seed, seed2;
-    auto status = context->GetAttr("seed", &seed);
-    status = context->GetAttr("seed2", &seed2);
-    generator_.ResetSeeds(seed, seed2);
+    generator_.Init(context);
   }
 
   ~DropoutOp() override {}
@@ -178,10 +175,7 @@ class DropoutGradOp : public OpKernel {
 
  public:
   explicit DropoutGradOp(OpKernelConstruction* context) : OpKernel(context) {
-    int64 seed, seed2;
-    auto status = context->GetAttr("seed", &seed);
-    status = context->GetAttr("seed2", &seed2);
-    generator_.ResetSeeds(seed, seed2);
+    generator_.Init(context);
   }
 
   ~DropoutGradOp() override {}
