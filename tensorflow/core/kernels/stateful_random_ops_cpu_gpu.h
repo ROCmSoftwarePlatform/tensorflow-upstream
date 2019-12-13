@@ -86,8 +86,7 @@ using CPUDevice = Eigen::ThreadPoolDevice;
 
 using GPUDevice = Eigen::GpuDevice;
 
-struct UpdateVariableAndFill_Philox_Arg
-{
+struct UpdateVariableAndFill_Philox_Arg {
   int64 output_size;
   int64 alg_tag_skip;
   ScopedUnlockUnrefVar* not_used;

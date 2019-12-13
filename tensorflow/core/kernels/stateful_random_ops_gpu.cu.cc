@@ -26,7 +26,7 @@ limitations under the License.
 #include "tensorflow/core/util/gpu_kernel_helper.h"
 #include "tensorflow/core/util/gpu_launch_config.h"
 
-// ROCm hipMemcpyToSymbol can only see this variable if it's in global namespace 
+// ROCm hipMemcpyToSymbol can only see this variable if it's in global namespace
 __device__ int tensorflow_philox_thread_counter;
 
 namespace tensorflow {
@@ -65,8 +65,8 @@ void UpdateVariableAndFill_Philox<GPUDevice, Distribution>::operator()(
   int64 output_size = arg->output_size;
   int64 alg_tag_skip = arg->alg_tag_skip;
   Tensor* state_tensor = arg->state_tensor;
-  printf("UpdateVariableAndFill_Philox out=%lld alg_tag=%lld state_tensor %p\n", output_size, alg_tag_skip, state_tensor);
-  //OP_REQUIRES(ctx, state_tensor!=0, errors::InvalidArgument("Null state tensor"));
+  OP_REQUIRES(ctx, state_tensor != 0,
+              errors::InvalidArgument("Null state tensor"));
   OP_REQUIRES(
       ctx, alg_tag_skip == 0,
       errors::InvalidArgument(
@@ -85,8 +85,10 @@ void UpdateVariableAndFill_Philox<GPUDevice, Distribution>::operator()(
 #if GOOGLE_CUDA
   cudaMemcpyToSymbol(tensorflow_philox_thread_counter, &zero, sizeof(int));
 #else  // TENSORFLOW_USE_ROCM
-  int status = hipMemcpyToSymbol(HIP_SYMBOL(tensorflow_philox_thread_counter), &zero, sizeof(int));
-  OP_REQUIRES(ctx, status==hipSuccess, errors::InvalidArgument("hipMemcpyToSymbol failed"));
+  int status = hipMemcpyToSymbol(HIP_SYMBOL(tensorflow_philox_thread_counter),
+                                 &zero, sizeof(int));
+  OP_REQUIRES(ctx, status == hipSuccess,
+              errors::InvalidArgument("hipMemcpyToSymbol failed"));
 #endif
   TF_CHECK_OK(GpuLaunchKernel(
       FillKernel<Distribution>, cfg.block_count, cfg.thread_per_block, 0,

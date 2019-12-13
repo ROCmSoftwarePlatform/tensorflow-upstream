@@ -25,8 +25,7 @@ namespace tensorflow {
 template <typename Distribution>
 struct UpdateVariableAndFill_Philox<CPUDevice, Distribution> {
   void operator()(OpKernelContext* ctx, const CPUDevice& device,
-                  Distribution dist, 
-                  UpdateVariableAndFill_Philox_Arg* arg,                  
+                  Distribution dist, UpdateVariableAndFill_Philox_Arg* arg,
                   typename Distribution::ResultElementType* output_data)
       UNLOCK_FUNCTION() {
     int64 output_size = arg->output_size;
