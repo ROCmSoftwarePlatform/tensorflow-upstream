@@ -102,7 +102,6 @@ Status UpdateVariableAndFill(
     TF_RETURN_IF_ERROR(PrepareToUpdateVariable<Device, StateElementType>(
         ctx, var_tensor, var->copy_on_read_mode.load()));
 
-    //printf("Calling UpdateVariableAndFill_Philox out=%lld alg_tag=%lld not_used=%p state_tensor %p dummy %p\n", output_size, alg_tag_skip, &state_var_guard, var_tensor, &alg);
     UpdateVariableAndFill_Philox_Arg arg;
     arg.output_size = output_size;
     arg.alg_tag_skip = alg_tag_skip;
