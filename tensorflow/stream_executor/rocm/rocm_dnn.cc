@@ -508,6 +508,14 @@ MIOpenSupport::MIOpenSupport(GpuExecutor* parent) : parent_(parent) {
   // (i.e. most efficient) algorithm will be returned
   tensorflow::ReadBoolFromEnvVar("TF_ROCM_RETURN_BEST_ALGO_ONLY", false,
                                  &return_best_algo_only_);
+
+  // by default, use Immediate Mode APIs for convolution
+  use_immediate_mode_ = true;
+  // swich to Find Mode if env var TF_ROCM_USE_FIND_MODE is set
+  bool use_find_mode = false;
+  tensorflow::ReadBoolFromEnvVar("TF_ROCM_USE_FIND_MODE", false,
+                                 &use_find_mode);
+  use_immediate_mode_ = !use_find_mode;
 }
 
 port::Status MIOpenSupport::Init() {
@@ -2738,6 +2746,30 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
     const dnn::AlgorithmConfig& algorithm_config,
     ScratchAllocator* scratch_allocator, dnn::AlgorithmDesc* algorithm_desc,
     DeviceMemory<uint8>* scratch_memory) {
+  return use_immediate_mode_
+             ? DoPrepareForConvolutionImmediateMode(
+                   kind, element_type, stream, input_descriptor, input_data,
+                   filter_descriptor, filter_data, output_descriptor,
+                   output_data, convolution_descriptor, algorithm_config,
+                   scratch_allocator, algorithm_desc, scratch_memory)
+
+             : DoPrepareForConvolutionFindMode(
+                   kind, element_type, stream, input_descriptor, input_data,
+                   filter_descriptor, filter_data, output_descriptor,
+                   output_data, convolution_descriptor, algorithm_config,
+                   scratch_allocator, algorithm_desc, scratch_memory);
+}
+
+port::Status MIOpenSupport::DoPrepareForConvolutionImmediateMode(
+    dnn::ConvolutionKind kind, dnn::DataType element_type, Stream* stream,
+    const dnn::BatchDescriptor& input_descriptor, DeviceMemoryBase input_data,
+    const dnn::FilterDescriptor& filter_descriptor,
+    DeviceMemoryBase filter_data, const dnn::BatchDescriptor& output_descriptor,
+    DeviceMemoryBase output_data,
+    const dnn::ConvolutionDescriptor& convolution_descriptor,
+    const dnn::AlgorithmConfig& algorithm_config,
+    ScratchAllocator* scratch_allocator, dnn::AlgorithmDesc* algorithm_desc,
+    DeviceMemory<uint8>* scratch_memory) {
   ScopedTensorDescriptor input_nd{
       input_descriptor,
       ToMIOpenDataType(element_type, input_descriptor.layout())};
@@ -2846,6 +2878,21 @@ port::Status MIOpenSupport::DoPrepareForConvolution(
   return port::Status::OK();
 }
 
+port::Status MIOpenSupport::DoPrepareForConvolutionFindMode(
+    dnn::ConvolutionKind kind, dnn::DataType element_type, Stream* stream,
+    const dnn::BatchDescriptor& input_descriptor, DeviceMemoryBase input_data,
+    const dnn::FilterDescriptor& filter_descriptor,
+    DeviceMemoryBase filter_data, const dnn::BatchDescriptor& output_descriptor,
+    DeviceMemoryBase output_data,
+    const dnn::ConvolutionDescriptor& convolution_descriptor,
+    const dnn::AlgorithmConfig& algorithm_config,
+    ScratchAllocator* scratch_allocator, dnn::AlgorithmDesc* algorithm_desc,
+    DeviceMemory<uint8>* scratch_memory) {
+  //
+  // EMPTY SHELL FOR FIND MODE
+  //
+  return port::Status::OK();
+}
 // NOTE(keveman): Temporary data layout transformation until MIOpen supports
 // kBatchYXDepth for backward pass. This function allocates temporary memory,
 // lays out the source data into the temporary but in the kBatchDepthXY
@@ -2935,11 +2982,15 @@ port::Status MIOpenSupport::DoConvolve(
   miopenStatus_t status = miopenStatusSuccess;
   switch (kind) {
     case dnn::ConvolutionKind::FORWARD: {
-      status = wrap::miopenConvolutionForwardImmediate(
-          miopen.handle(), filter.handle(), filter_data.opaque(),
-          input_nd.handle(), input_data.opaque(), conv.handle(),
-          output_nd.handle(), output_data.opaque(), scratch_memory.opaque(),
-          scratch_memory.size(), solution_id);
+      if (use_immediate_mode_) {
+        status = wrap::miopenConvolutionForwardImmediate(
+            miopen.handle(), filter.handle(), filter_data.opaque(),
+            input_nd.handle(), input_data.opaque(), conv.handle(),
+            output_nd.handle(), output_data.opaque(), scratch_memory.opaque(),
+            scratch_memory.size(), solution_id);
+      } else {
+        // EMPTY SHELL FOR FIND MODE
+      }
 
       break;
     }
@@ -2952,11 +3003,15 @@ port::Status MIOpenSupport::DoConvolve(
           stream, miopen.handle(), ToMIOpenDataType(element_type),
           &output_back_descriptor, output_data, &transform_scratch);
 
-      status = wrap::miopenConvolutionBackwardDataImmediate(
-          miopen.handle(), output_nd.handle(), output_data.opaque(),
-          filter.handle(), filter_data.opaque(), conv.handle(),
-          input_nd.handle(), input_data.opaque(), scratch_memory.opaque(),
-          scratch_memory.size(), solution_id);
+      if (use_immediate_mode_) {
+        status = wrap::miopenConvolutionBackwardDataImmediate(
+            miopen.handle(), output_nd.handle(), output_data.opaque(),
+            filter.handle(), filter_data.opaque(), conv.handle(),
+            input_nd.handle(), input_data.opaque(), scratch_memory.opaque(),
+            scratch_memory.size(), solution_id);
+      } else {
+        // EMPTY SHELL FOR FIND MODE
+      }
       break;
     }
     case dnn::ConvolutionKind::BACKWARD_FILTER: {
@@ -2968,11 +3023,15 @@ port::Status MIOpenSupport::DoConvolve(
           stream, miopen.handle(), ToMIOpenDataType(element_type),
           &output_back_descriptor, output_data, &transform_scratch);
 
-      status = wrap::miopenConvolutionBackwardWeightsImmediate(
-          miopen.handle(), output_nd.handle(), output_data.opaque(),
-          input_nd.handle(), input_data.opaque(), conv.handle(),
-          filter.handle(), filter_data.opaque(), scratch_memory.opaque(),
-          scratch_memory.size(), solution_id);
+      if (use_immediate_mode_) {
+        status = wrap::miopenConvolutionBackwardWeightsImmediate(
+            miopen.handle(), output_nd.handle(), output_data.opaque(),
+            input_nd.handle(), input_data.opaque(), conv.handle(),
+            filter.handle(), filter_data.opaque(), scratch_memory.opaque(),
+            scratch_memory.size(), solution_id);
+      } else {
+        // EMPTY SHELL FOR FIND MODE
+      }
       break;
     }
     default:
@@ -3019,6 +3078,23 @@ bool MIOpenSupport::GetConvolveAlgorithms(
 }
 
 bool MIOpenSupport::GetMIOpenConvolveAlgorithms(
+    dnn::ConvolutionKind kind, Stream* stream, dnn::DataType element_type,
+    const dnn::BatchDescriptor& input_descriptor,
+    const dnn::FilterDescriptor& filter_descriptor,
+    const dnn::ConvolutionDescriptor& convolution_descriptor,
+    const dnn::BatchDescriptor& output_descriptor,
+    std::vector<dnn::ProfileResult>* out_algorithms) {
+  return use_immediate_mode_ ? GetMIOpenConvolveAlgorithmsImmediateMode(
+                                   kind, stream, element_type, input_descriptor,
+                                   filter_descriptor, convolution_descriptor,
+                                   output_descriptor, out_algorithms)
+                             : GetMIOpenConvolveAlgorithmsFindMode(
+                                   kind, stream, element_type, input_descriptor,
+                                   filter_descriptor, convolution_descriptor,
+                                   output_descriptor, out_algorithms);
+}
+
+bool MIOpenSupport::GetMIOpenConvolveAlgorithmsImmediateMode(
     dnn::ConvolutionKind kind, Stream* stream, dnn::DataType element_type,
     const dnn::BatchDescriptor& input_descriptor,
     const dnn::FilterDescriptor& filter_descriptor,
@@ -3222,6 +3298,19 @@ bool MIOpenSupport::GetMIOpenConvolveAlgorithms(
     }
   }
 
+  return true;
+}
+
+bool MIOpenSupport::GetMIOpenConvolveAlgorithmsFindMode(
+    dnn::ConvolutionKind kind, Stream* stream, dnn::DataType element_type,
+    const dnn::BatchDescriptor& input_descriptor,
+    const dnn::FilterDescriptor& filter_descriptor,
+    const dnn::ConvolutionDescriptor& convolution_descriptor,
+    const dnn::BatchDescriptor& output_descriptor,
+    std::vector<dnn::ProfileResult>* out_algorithms) {
+  //
+  // EMPTY SHELL FOR FIND MODE
+  //
   return true;
 }
 
