@@ -2852,6 +2852,12 @@ port::Status MIOpenSupport::DoPrepareForConvolutionImmediateMode(
   VLOG(2) << "miopen...GetSolutionWorkspaceSize returned "
           << scratch_memory_size << " for solution_id " << solution_id;
 
+  size_t scratch_memory_size_from_config = 0;
+  if (algorithm_config.scratch_size().has_value())
+    scratch_memory_size_from_config = *(algorithm_config.scratch_size());
+
+  CHECK_EQ(scratch_memory_size, scratch_memory_size_from_config);
+
   // allocate scratch memory
   if (scratch_memory_size != 0) {
     if (scratch_allocator == nullptr) {
