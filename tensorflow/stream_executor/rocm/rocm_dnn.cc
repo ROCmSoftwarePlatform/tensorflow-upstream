@@ -2795,68 +2795,9 @@ port::Status MIOpenSupport::DoPrepareForConvolutionImmediateMode(
 
   const uint64_t solution_id = algorithm_desc->algo_id();
 
-  size_t scratch_memory_size = 0;
+  assert(algorithm_config.scratch_size().has_value());
 
-  switch (kind) {
-    case dnn::ConvolutionKind::FORWARD: {
-      auto status = wrap::miopenConvolutionForwardGetSolutionWorkspaceSize(
-          miopen.handle(), filter.handle(), input_nd.handle(), conv.handle(),
-          output_nd.handle(), solution_id, &scratch_memory_size);
-
-      if (status != miopenStatusSuccess) {
-        return port::InternalError(absl::StrCat(
-            "call to miopenConvolutionForwardGetSolutionWorkspaceSize "
-            "failed: ",
-            ToString(status)));
-      }
-      break;
-    }
-
-    case dnn::ConvolutionKind::BACKWARD_DATA: {
-      auto status = wrap::miopenConvolutionBackwardDataGetSolutionWorkspaceSize(
-          miopen.handle(), output_nd.handle(), filter.handle(), conv.handle(),
-          input_nd.handle(), solution_id, &scratch_memory_size);
-
-      if (status != miopenStatusSuccess) {
-        return port::InternalError(absl::StrCat(
-            "call to miopenConvolutionabckwardDataGetSolutionWorkspaceSize "
-            "failed: ",
-            ToString(status)));
-      }
-      break;
-    }
-
-    case dnn::ConvolutionKind::BACKWARD_FILTER: {
-      auto status =
-          wrap::miopenConvolutionBackwardWeightsGetSolutionWorkspaceSize(
-              miopen.handle(), output_nd.handle(), input_nd.handle(),
-              conv.handle(), filter.handle(), solution_id,
-              &scratch_memory_size);
-
-      if (status != miopenStatusSuccess) {
-        return port::InternalError(absl::StrCat(
-            "call to miopenConvolutionabckwardWeightsGetSolutionWorkspaceSize "
-            "failed: ",
-            ToString(status)));
-      }
-      break;
-    }
-
-    default: {
-      return port::InternalError(
-          absl::StrCat("Unexpected convolution kind ", static_cast<int>(kind)));
-      break;
-    }
-  }
-
-  VLOG(2) << "miopen...GetSolutionWorkspaceSize returned "
-          << scratch_memory_size << " for solution_id " << solution_id;
-
-  size_t scratch_memory_size_from_config = 0;
-  if (algorithm_config.scratch_size().has_value())
-    scratch_memory_size_from_config = *(algorithm_config.scratch_size());
-
-  CHECK_EQ(scratch_memory_size, scratch_memory_size_from_config);
+  size_t scratch_memory_size = *(algorithm_config.scratch_size());
 
   // allocate scratch memory
   if (scratch_memory_size != 0) {
