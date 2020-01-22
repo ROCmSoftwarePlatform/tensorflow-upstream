@@ -31,10 +31,19 @@ limitations under the license, the license you must see.
 #include "third_party/gpus/cuda/include/cusparse.h"
 
 namespace gpuprim = ::cub;
+
+// Required for sorting Eigen::half
+namespace cub {
+template <>
+struct NumericTraits<Eigen::half>
+    : BaseTraits<FLOATING_POINT, true, false, unsigned short, Eigen::half> {};
+}  // namespace cub
+
 #elif TENSORFLOW_USE_ROCM
 #include "rocm/include/hipcub/hipcub.hpp"
 namespace gpuprim = ::hipcub;
 
+// Required for sorting Eigen::half
 namespace rocprim {
 namespace detail {
 template <>
@@ -42,6 +51,7 @@ struct radix_key_codec_base<Eigen::half>
     : radix_key_codec_floating<Eigen::half, unsigned short> {};
 };  // namespace detail
 };  // namespace rocprim
-#endif  // GOOGLE_CUDA
+
+#endif  // TENSORFLOW_USE_ROCM
 
 #endif  // TENSORFLOW_CORE_KERNELS_GPU_PRIM_H_
