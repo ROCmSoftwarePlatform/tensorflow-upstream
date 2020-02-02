@@ -9,8 +9,21 @@ This instruction provides a starting point for build TensorFlow ROCm port from s
 
 Follow steps at [Basic Installation](https://github.com/ROCmSoftwarePlatform/tensorflow-upstream/blob/develop-upstream/rocm_docs/tensorflow-install-basic.md#install-rocm) to install ROCm stack.
 
-Setup environment variables, and add those environment variables at the end of ~/.bashrc 
+## Install marshalling libraries
+
+```bash
+wget -O rocsparse.deb http://repo.radeon.com/rocm/apt/debian/pool/main/r/rocsparse/rocsparse_1.5.15.691-rocm-rel-3.0-6-aee785e_amd64.deb && sudo dpkg --install rocsparse.deb && rm rocsparse.deb
 ```
+
+```bash
+wget -O hipsparse.deb http://repo.radeon.com/rocm/apt/debian/pool/main/h/hipsparse/hipsparse_1.3.3.208-rocm-rel-3.0-6-f98f82e_amd64.deb && sudo dpkg --install hipsparse.deb && rm hipsparse.deb
+```
+
+## Export paths
+
+Setup environment variables, and add those environment variables at the end of ~/.bashrc 
+
+```bash
 export HCC_HOME=/opt/rocm/hcc
 export HIP_PATH=/opt/rocm/hip
 export PATH=$HCC_HOME/bin:$HIP_PATH/bin:$PATH
@@ -19,7 +32,8 @@ export PATH=$HCC_HOME/bin:$HIP_PATH/bin:$PATH
 ## Install required python packages
 
 On Python 2-based systems:
-```
+
+```bash
 sudo apt-get update && sudo apt-get install -y \
     python-numpy \
     python-dev \
@@ -33,7 +47,8 @@ sudo apt-get update && sudo apt-get install -y \
 ```
 
 On Python 3-based systems:
-```
+
+```bash
 sudo apt-get update && sudo apt-get install -y \
     python3-numpy \
     python3-dev \
@@ -52,19 +67,26 @@ sudo apt-get update && sudo apt-get install -y \
 echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
 curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
 sudo apt-get update && sudo apt-get install -y openjdk-8-jdk openjdk-8-jre unzip && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* 
-cd ~/ && wget https://github.com/bazelbuild/bazel/releases/download/0.24.1/bazel-0.24.1-installer-linux-x86_64.sh
+cd ~/ && wget https://github.com/bazelbuild/bazel/releases/download/1.2.1/bazel-1.2.1-installer-linux-x86_64.sh
 sudo bash ~/bazel*.sh
 ```
 
 ## Build TensorFlow ROCm port
 
-```
-# Clone it
+Clone this repository:
+
+```bash
 cd ~ && git clone -b r1.14-rocm https://github.com/ROCmSoftwarePlatform/tensorflow-upstream.git
+````
 
-# Python 2: Build and install TensorFlow ROCm port pip package
+Python 2: Build and install TensorFlow ROCm port pip package
+
+```
 cd ~/tensorflow && ./build_rocm
+```
 
-# Python 3: Build and install TensorFlow ROCm port pip3 package
+Python 3: Build and install TensorFlow ROCm port pip3 package
+
+```bash
 cd ~/tensorflow && ./build_rocm_python3
 ```
