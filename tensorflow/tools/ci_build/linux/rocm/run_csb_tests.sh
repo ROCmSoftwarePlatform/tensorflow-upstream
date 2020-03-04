@@ -32,7 +32,7 @@ export CC_OPT_FLAGS='-mavx'
 export TF_NEED_ROCM=1
 export TF_GPU_COUNT=${N_GPUS}
 
-yes "" | $PYTHON_BIN_PATH configure.py
+yes "" | ROCM_TOOLKIT_PATH=/opt/rocm-3.1.0 $PYTHON_BIN_PATH configure.py
 
 # Run bazel test command. Double test timeouts to avoid flakes.
 bazel test \
