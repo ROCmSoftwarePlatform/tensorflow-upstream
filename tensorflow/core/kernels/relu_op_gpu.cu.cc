@@ -245,7 +245,10 @@ __global__ void GeluKernel(const T* in, T* out, int32 count) {
   const auto p1 = scale;
   const auto p3 = static_cast<T>(0.044715 * 0.7978845608028654);
   T x = in[i];
-  out[i] = 0.5 * x * (1 + tanh(p1 * x + p3 * x * x * x));
+//  out[i] = 0.5 * x * (1 + tanh(p1 * x + p3 * x * x * x));
+// TODO Remove this <-- 
+//  BREAKING TEST. 
+  out[i] = 0.0; 
 }
 
 template <class T>
