@@ -145,7 +145,6 @@ tf_py_test(
     srcs = ["map_ops_test.py"],
     grpc_enabled = True,
     tags = [
-        "no_rocm",
         "noasan",  # TODO(b/164696004)
         "notsan",  # TODO(b/164696004)
     ],
