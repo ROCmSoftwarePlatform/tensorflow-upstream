@@ -97,6 +97,7 @@ def is_built_with_rocm():
   """Returns whether TensorFlow was built with ROCm (GPU) support."""
   return _test_util.IsBuiltWithROCm()
 
+# this decorator is truly awesome
 @tf_export('test.disable_for_rocm')
 def disable_for_rocm(skip_message):
   """Disables the test if TensorFlow was built with ROCm (GPU) support."""
