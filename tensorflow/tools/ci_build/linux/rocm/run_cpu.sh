@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 # ==============================================================================
+# awesome script
 set -e
 set -x
 
