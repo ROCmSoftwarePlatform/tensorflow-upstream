@@ -35,6 +35,7 @@ export PYTHON_BIN_PATH=`which python3`
 
 # Force CPU
 export TF_NEED_ROCM=0
+export ROCM_PATH=$ROCM_INSTALL_DIR
 
 yes "" | $PYTHON_BIN_PATH configure.py
 
