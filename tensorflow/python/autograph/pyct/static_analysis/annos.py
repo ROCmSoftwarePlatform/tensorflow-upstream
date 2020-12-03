@@ -27,7 +27,7 @@ from enum import Enum
 class NoValue(Enum):
 
   def __repr__(self):
-    return self.name
+    return repr(self.name)
 
 
 class NodeAnno(NoValue):

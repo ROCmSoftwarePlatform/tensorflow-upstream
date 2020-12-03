@@ -110,7 +110,7 @@ class OpsSet(enum.Enum):
     "EXPERIMENTAL_TFLITE_BUILTINS_ACTIVATIONS_INT16_WEIGHTS_INT8"
 
   def __str__(self):
-    return self.value
+    return str(self.value)
 
   @staticmethod
   def get_options():
