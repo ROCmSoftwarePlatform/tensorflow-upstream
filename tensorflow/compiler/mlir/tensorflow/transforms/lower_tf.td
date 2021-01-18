@@ -37,6 +37,12 @@ class GetI64ScalarElementsAttr<int value> :
 
 def TrueBoolAttr : AttrConstraint<CPred<"$_self.getValue()">>;
 
+def CreateTFShapeOp : NativeCodeCall<
+    "$_builder.create<TF::ShapeOp>($0.getLoc(), $1, $2)">;
+
+def IsI32 : NativeCodeCall<
+    "$_builder.getBoolAttr(getElementTypeOrSelf($0.getType()).isInteger(32))">;
+
 //===----------------------------------------------------------------------===//
 // BiasAddGrad op patterns.
 //===----------------------------------------------------------------------===//
@@ -155,6 +161,14 @@ foreach fromToBinPair = [[TF_DivNoNanOp, TF_DivOp],
   def : BinaryNoNanPat<fromToBinPair[0], fromToBinPair[1]>;
 
 //===----------------------------------------------------------------------===//
+// Expm1 op patterns.
+//===----------------------------------------------------------------------===//
+
+def LowerExpm1Op : Pat<(TF_Expm1Op $x),
+                       (TF_SubOp (TF_ExpOp $x),
+                        (TF_ConstOp (GetScalarOfType<1> $x)))>;
+
+//===----------------------------------------------------------------------===//
 // Fill op patterns.
 //===----------------------------------------------------------------------===//
 
@@ -254,6 +268,18 @@ def : Pat<(TF_RsqrtGradOp $lhs, $rhs),
 
 
 //===----------------------------------------------------------------------===//
+// Size op patterns.
+//===----------------------------------------------------------------------===//
+
+// Size(x) = Prod(Shape(x), reduction_indices=0, keep_dims=false)
+def : Pat<(TF_SizeOp:$res $arg),
+          (TF_ProdOp
+            (CreateTFShapeOp $res, $arg, (IsI32 $res)),
+            /*reduction_indices=*/(TF_ConstOp (GetScalarOfType<0> $res)),
+            /*keep_dims=*/ConstBoolAttrFalse)>;
+
+
+//===----------------------------------------------------------------------===//
 // TanhGrad op patterns.
 //===----------------------------------------------------------------------===//
 
@@ -279,8 +305,6 @@ def LowerFakeQuantWithMinMaxArgs :
 // ZerosLike op patterns.
 //===----------------------------------------------------------------------===//
 
-def CreateTFShapeOp : NativeCodeCall<
-    "$_builder.create<TF::ShapeOp>($0.getLoc(), $1, $2)">;
 
 class LowerInitializationOp<Op FromOp, int initial_val>
   : Pat<(FromOp:$src_op

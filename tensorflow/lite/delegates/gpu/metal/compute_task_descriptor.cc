@@ -33,14 +33,10 @@ namespace metal {
 namespace {
 std::string GetElementWiseCode(const OperationDef& op_def) {
   return R"(
-#include <metal_stdlib>
-using namespace metal;
-$0
-kernel void ComputeFunction($1
-                            uint3 gid[[thread_position_in_grid]]) {
-  int X = static_cast<int>(gid.x);
-  int Y = static_cast<int>(gid.y);
-  int Z = static_cast<int>(gid.z);
+MAIN_FUNCTION($0) {
+  int X = GLOBAL_ID_0;
+  int Y = GLOBAL_ID_1;
+  int Z = GLOBAL_ID_2;
   if (X >= args.dst_tensor.Width() || Y >= args.dst_tensor.Height() || Z >= args.dst_tensor.Slices()) {
     return;
   }
