@@ -328,7 +328,7 @@ def _find_libs(repository_ctx, rocm_config, bash_bin):
         for name, path in [
             ("amdhip64", rocm_config.rocm_toolkit_path + "/hip"),
             ("rocblas", rocm_config.rocm_toolkit_path + "/rocblas"),
-            ("rocfft", rocm_config.rocm_toolkit_path + "/rocfft"),
+            ("hipfft", rocm_config.rocm_toolkit_path + "/hipfft"),
             ("hiprand", rocm_config.rocm_toolkit_path + "/hiprand"),
             ("MIOpen", rocm_config.rocm_toolkit_path + "/miopen"),
             ("rccl", rocm_config.rocm_toolkit_path + "/rccl"),
@@ -457,7 +457,7 @@ def _create_dummy_repository(repository_ctx):
             "%{rocblas_lib}": _lib_name("rocblas"),
             "%{miopen_lib}": _lib_name("miopen"),
             "%{rccl_lib}": _lib_name("rccl"),
-            "%{rocfft_lib}": _lib_name("rocfft"),
+            "%{hipfft_lib}": _lib_name("hipfft"),
             "%{hiprand_lib}": _lib_name("hiprand"),
             "%{hipsparse_lib}": _lib_name("hipsparse"),
             "%{roctracer_lib}": _lib_name("roctracer64"),
@@ -551,9 +551,9 @@ def _create_local_rocm_repository(repository_ctx):
         ),
         make_copy_dir_rule(
             repository_ctx,
-            name = "rocfft-include",
-            src_dir = rocm_toolkit_path + "/rocfft/include",
-            out_dir = "rocm/include/rocfft",
+            name = "hipfft-include",
+            src_dir = rocm_toolkit_path + "/hipfft/include",
+            out_dir = "rocm/include/hipfft",
         ),
         make_copy_dir_rule(
             repository_ctx,
@@ -651,7 +651,7 @@ def _create_local_rocm_repository(repository_ctx):
         {
             "%{hip_lib}": rocm_libs["amdhip64"].file_name,
             "%{rocblas_lib}": rocm_libs["rocblas"].file_name,
-            "%{rocfft_lib}": rocm_libs["rocfft"].file_name,
+            "%{hipfft_lib}": rocm_libs["hipfft"].file_name,
             "%{hiprand_lib}": rocm_libs["hiprand"].file_name,
             "%{miopen_lib}": rocm_libs["MIOpen"].file_name,
             "%{rccl_lib}": rocm_libs["rccl"].file_name,
@@ -660,7 +660,7 @@ def _create_local_rocm_repository(repository_ctx):
             "%{rocsolver_lib}": rocm_libs["rocsolver"].file_name,
             "%{copy_rules}": "\n".join(copy_rules),
             "%{rocm_headers}": ('":rocm-include",\n' +
-                                '":rocfft-include",\n' +
+                                '":hipfft-include",\n' +
                                 '":rocblas-include",\n' +
                                 '":miopen-include",\n' +
                                 '":rccl-include",\n' +

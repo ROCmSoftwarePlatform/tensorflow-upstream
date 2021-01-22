@@ -20,7 +20,7 @@ limitations under the License.
 #ifndef TENSORFLOW_STREAM_EXECUTOR_ROCM_ROCM_FFT_H_
 #define TENSORFLOW_STREAM_EXECUTOR_ROCM_ROCM_FFT_H_
 
-#include "rocm/include/rocfft/hipfft.h"
+#include "rocm/include/hipfft/hipfft.h"
 #include "tensorflow/stream_executor/fft.h"
 #include "tensorflow/stream_executor/platform/port.h"
 #include "tensorflow/stream_executor/plugin_registry.h"

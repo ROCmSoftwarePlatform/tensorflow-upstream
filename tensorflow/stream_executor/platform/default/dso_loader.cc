@@ -133,8 +133,8 @@ port::StatusOr<void*> GetMiopenDsoHandle() {
   return GetDsoHandle("MIOpen", "");
 }
 
-port::StatusOr<void*> GetRocfftDsoHandle() {
-  return GetDsoHandle("rocfft", "");
+port::StatusOr<void*> GetHipfftDsoHandle() {
+  return GetDsoHandle("hipfft", "");
 }
 
 port::StatusOr<void*> GetRocrandDsoHandle() {
@@ -214,8 +214,8 @@ port::StatusOr<void*> GetMiopenDsoHandle() {
   return *result;
 }
 
-port::StatusOr<void*> GetRocfftDsoHandle() {
-  static auto result = new auto(DsoLoader::GetRocfftDsoHandle());
+port::StatusOr<void*> GetHipfftDsoHandle() {
+  static auto result = new auto(DsoLoader::GetHipfftDsoHandle());
   return *result;
 }
 

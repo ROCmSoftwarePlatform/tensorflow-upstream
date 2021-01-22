@@ -184,26 +184,26 @@ def _find_rocrand_config(rocm_install_path):
   return rocrand_config
 
 
-def _find_rocfft_config(rocm_install_path):
+def _find_hipfft_config(rocm_install_path):
 
-  def rocfft_version_numbers(path):
-    version_file = os.path.join(path, "rocfft/include/rocfft-version.h")
+  def hipfft_version_numbers(path):
+    version_file = os.path.join(path, "hipfft/include/hipfft-version.h")
     if not os.path.exists(version_file):
       raise ConfigError(
-          'rocfft version file "{}" not found'.format(version_file))
-    major = _get_header_version(version_file, "rocfft_version_major")
-    minor = _get_header_version(version_file, "rocfft_version_minor")
-    patch = _get_header_version(version_file, "rocfft_version_patch")
+          'hipfft version file "{}" not found'.format(version_file))
+    major = _get_header_version(version_file, "hipfftVersionMajor")
+    minor = _get_header_version(version_file, "hipfftVersionMinor")
+    patch = _get_header_version(version_file, "hipfftVersionPatch")
     return major, minor, patch
 
-  major, minor, patch = rocfft_version_numbers(rocm_install_path)
+  major, minor, patch = hipfft_version_numbers(rocm_install_path)
 
-  rocfft_config = {
-      "rocfft_version_number":
+  hipfft_config = {
+      "hipfft_version_number":
           _get_composite_version_number(major, minor, patch)
   }
 
-  return rocfft_config
+  return hipfft_config
 
 
 def _find_roctracer_config(rocm_install_path):
@@ -288,7 +288,11 @@ def find_rocm_config():
   result.update(_find_miopen_config(rocm_install_path))
   result.update(_find_rocblas_config(rocm_install_path))
   result.update(_find_rocrand_config(rocm_install_path))
-  result.update(_find_rocfft_config(rocm_install_path))
+  # Commenting this out temporarily because
+  # the hipfft header has a typo in it, which will cause the following call
+  # to _find_hipfft_config to fail.
+  # typo : "#define hipffteVersionMinor 0"  -- extra "e"
+  # result.update(_find_hipfft_config(rocm_install_path))
   result.update(_find_roctracer_config(rocm_install_path))
   result.update(_find_hipsparse_config(rocm_install_path))
   result.update(_find_rocsolver_config(rocm_install_path))
