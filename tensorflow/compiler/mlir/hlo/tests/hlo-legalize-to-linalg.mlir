@@ -33,7 +33,7 @@ func @integer_add(%lhs: tensor<2x2xi32>,
 func @complex_add(%lhs: tensor<2x2xcomplex<f32>>,
                   %rhs: tensor<2x2xcomplex<f32>>) -> tensor<2x2xcomplex<f32>> {
   // CHECK: linalg.generic
-  // CHECK: addcf
+  // CHECK: complex.add
   %0 = "mhlo.add"(%lhs, %rhs) : (tensor<2x2xcomplex<f32>>,
       tensor<2x2xcomplex<f32>>) -> tensor<2x2xcomplex<f32>>
   return %0 : tensor<2x2xcomplex<f32>>
@@ -128,7 +128,7 @@ func @integer_sub(%lhs: tensor<2x2xi32>,
 func @complex_sub(%lhs: tensor<2x2xcomplex<f32>>,
                   %rhs: tensor<2x2xcomplex<f32>>) -> tensor<2x2xcomplex<f32>> {
   // CHECK: linalg.generic
-  // CHECK: subcf
+  // CHECK: complex.sub
   %0 = "mhlo.subtract"(%lhs, %rhs) : (tensor<2x2xcomplex<f32>>,
       tensor<2x2xcomplex<f32>>) -> tensor<2x2xcomplex<f32>>
   return %0 : tensor<2x2xcomplex<f32>>
@@ -161,6 +161,32 @@ func @float_log(%arg0: tensor<2x2xf32>) -> tensor<2x2xf32> {
   // CHECK: linalg.generic
   // CHECK: log
   %0 = "mhlo.log"(%arg0) : (tensor<2x2xf32>) -> tensor<2x2xf32>
+  return %0 : tensor<2x2xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func @float_log1p
+func @float_log1p(%arg0: tensor<2x2xf32>) -> tensor<2x2xf32> {
+  // CHECK: linalg.generic
+  // CHECK: log1p
+  %0 = "mhlo.log_plus_one"(%arg0) : (tensor<2x2xf32>) -> tensor<2x2xf32>
+  return %0 : tensor<2x2xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func @float_logistic
+func @float_logistic(%arg0: tensor<2x2xf32>) -> tensor<2x2xf32> {
+  // CHECK: linalg.generic
+  // CHECK: ^bb0(%[[ARG:.*]]: f32, %{{.*}}: f32):
+  // CHECK: %[[C1:.*]] = constant 1.{{.*}}e+00
+  // CHECK: %[[NEG_ARG:.*]] = negf %[[ARG]]
+  // CHECK: %[[EXP_NEG_ARG:.*]] = exp %[[NEG_ARG]]
+  // CHECK: %[[ONE_ADD_EXP_NEG_ARG:.*]] = addf %[[C1]], %[[EXP_NEG_ARG]]
+  // CHECK: %[[RESULT:.*]] = divf %[[C1]], %[[ONE_ADD_EXP_NEG_ARG]]
+  // CHECK: linalg.yield %[[RESULT]]
+  %0 = "mhlo.logistic"(%arg0) : (tensor<2x2xf32>) -> tensor<2x2xf32>
   return %0 : tensor<2x2xf32>
 }
 
@@ -514,7 +540,10 @@ func @minf(%lhs: tensor<2x2xf32>, %rhs: tensor<2x2xf32>) -> tensor<2x2xf32> {
 // CHECK: linalg.generic
 // CHECK-NEXT: ^bb0(%[[LHS_IN:.*]]: f32, %[[RHS_IN:.*]]: f32, %{{.*}}: f32):
 // CHECK-NEXT:   %[[CMP:.*]] = cmpf olt, %[[LHS_IN]], %[[RHS_IN]] : f32
-// CHECK-NEXT:   %[[RESULT:.*]] = select %[[CMP]], %[[LHS_IN]], %[[RHS_IN]] : f32
+// CHECK-NEXT:   %[[MIN:.*]] = select %[[CMP]], %[[LHS_IN]], %[[RHS_IN]] : f32
+// CHECK-NEXT:   %[[ISNAN:.*]] = cmpf uno, %[[LHS_IN]], %[[RHS_IN]] : f32
+// CHECK-NEXT:   %[[NAN:.*]] = constant 0x7FC00000 : f32
+// CHECK-NEXT:   %[[RESULT:.*]] = select %[[ISNAN]], %[[NAN]], %[[MIN]] : f32
 // CHECK-NEXT:   linalg.yield %[[RESULT]] : f32
 
 // -----
@@ -605,6 +634,19 @@ func @reshape_multiple_collapse
 //   CHECK-DAG: #[[MAP3:.*]] = affine_map<(d0, d1, d2, d3, d4, d5) -> (d4, d5)>
 // CHECK-LABEL: func @reshape_multiple_collapse
 //       CHECK: linalg.tensor_reshape %{{.*}} [#[[MAP0]], #[[MAP1]], #[[MAP2]], #[[MAP3]]]
+
+// -----
+
+// CHECK-LABEL: func @convert_i1_to_f32
+func @convert_i1_to_f32(%input: tensor<2x2xi1>) -> tensor<2x2xf32> {
+  %result = "mhlo.convert"(%input) : (tensor<2x2xi1>) -> tensor<2x2xf32>
+  return %result : tensor<2x2xf32>
+}
+// CHECK: linalg.init_tensor
+// CHECK: linalg.generic
+// CHECK-NEXT: ^bb0(%[[OPERAND_IN:.*]]: i1, %{{.*}}: f32):
+// CHECK-NEXT:   %[[RESULT:.*]] = uitofp %[[OPERAND_IN]] : i1 to f32
+// CHECK-NEXT:   linalg.yield %[[RESULT]] : f32
 
 // -----
 
@@ -849,7 +891,7 @@ func @dot_matmul(%arg0: tensor<2x3xf32>,
   return %0 : tensor<2x?xf32>
 }
 // CHECK: func @dot_matmul(%[[ARG0:.*]]: tensor<2x3xf32>, %[[ARG1:.*]]: tensor<3x?xf32>)
-// CHECK: %[[INIT:.*]] = dynamic_tensor_from_elements
+// CHECK: %[[INIT:.*]] = tensor.generate
 // CHECK: linalg.matmul
 // CHECK-SAME: ins(%[[ARG0]], %[[ARG1]] : tensor<2x3xf32>, tensor<3x?xf32>)
 // CHECK-SAME: outs(%[[INIT]] : tensor<2x?xf32>)
@@ -863,7 +905,7 @@ func @dot_matvec(%arg0: tensor<?x3xf32>,
   return %0 : tensor<?xf32>
 }
 // CHECK: func @dot_matvec(%[[ARG0:.*]]: tensor<?x3xf32>, %[[ARG1:.*]]: tensor<3xf32>)
-// CHECK: %[[INIT:.*]] = dynamic_tensor_from_elements
+// CHECK: %[[INIT:.*]] = tensor.generate
 // CHECK: linalg.matvec
 // CHECK-SAME: ins(%[[ARG0]], %[[ARG1]] : tensor<?x3xf32>, tensor<3xf32>)
 // CHECK-SAME: outs(%[[INIT]] : tensor<?xf32>)
@@ -876,7 +918,7 @@ func @dot_dot(%arg0: tensor<?xf32>,
   return %0 : tensor<f32>
 }
 // CHECK: func @dot_dot(%[[ARG0:.*]]: tensor<?xf32>, %[[ARG1:.*]]: tensor<?xf32>)
-// CHECK: %[[INIT:.*]] = dynamic_tensor_from_elements
+// CHECK: %[[INIT:.*]] = tensor.generate
 // CHECK: linalg.dot
 // CHECK-SAME: ins(%[[ARG0]], %[[ARG1]] : tensor<?xf32>, tensor<?xf32>)
 // CHECK-SAME: outs(%[[INIT]] : tensor<f32>)
@@ -897,7 +939,7 @@ func @dot_general(%arg0: tensor<?x?x3xf32>,
   return %0 : tensor<?x?x?xf32>
 }
 // CHECK: func @dot_general(%[[ARG0:.*]]: tensor<?x?x3xf32>, %[[ARG1:.*]]: tensor<?x3x?xf32>)
-// CHECK: %[[INIT:.*]] = dynamic_tensor_from_elements
+// CHECK: %[[INIT:.*]] = tensor.generate
 // CHECK: linalg.batch_matmul
 // CHECK-SAME: ins(%[[ARG0]], %[[ARG1]] : tensor<?x?x3xf32>, tensor<?x3x?xf32>)
 // CHECK-SAME: outs(%[[INIT]] : tensor<?x?x?xf32>)
@@ -911,10 +953,14 @@ func @clamp(%lb : tensor<4xf32>, %x : tensor<4xf32>, %ub : tensor<4xf32>)
   // CHECK: %[[INIT:.*]] = linalg.init_tensor
   // CHECK: %[[RESULT:.*]] = linalg.generic {{.*}} ins(%[[LB]], %[[X]], %[[UB]] : tensor<4xf32>, tensor<4xf32>, tensor<4xf32>) outs(%[[INIT]] : tensor<4xf32>)
   // CHECK: ^bb0(%[[SCALAR_LB:.*]]: f32, %[[SCALAR_X:.*]]: f32, %[[SCALAR_UB:.*]]: f32, %{{.*}}: f32):
-  // CHECK:   %[[LT_X_UB:.*]] = cmpf olt, %[[SCALAR_X]], %[[SCALAR_UB]]
-  // CHECK:   %[[X2:.*]] = select %[[LT_X_UB]], %[[SCALAR_X]], %[[SCALAR_UB]]
-  // CHECK:   %[[GT_X2_LB:.*]] = cmpf ogt, %[[X2]], %[[SCALAR_LB]]
-  // CHECK:   %[[MAX_X2_LB:.*]] = select %[[GT_X2_LB]], %[[X2]], %[[SCALAR_LB]]
+  // CHECK:   cmpf olt
+  // CHECK:   select
+  // CHECK:   cmpf uno
+  // CHECK:   select
+  // CHECK:   cmpf ogt
+  // CHECK:   select
+  // CHECK:   cmpf uno
+  // CHECK:   %[[MAX_X2_LB:.*]] = select
   // CHECK:   linalg.yield %[[MAX_X2_LB]]
   // CHECK: } -> tensor<4xf32>
   // CHECK: return %[[RESULT]] : tensor<4xf32>

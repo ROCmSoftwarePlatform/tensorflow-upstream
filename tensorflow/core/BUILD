@@ -529,9 +529,12 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps =
+        # copybara:uncomment_begin
+        # if_mobile(["@nsync//:nsync_cpp"]) +
+        # copybara:uncomment_end_uncomment_begin
+        # ["@nsync//:nsync_cpp"] +
+        # copybara:comment_end
         [
-            "@nsync//:nsync_cpp",
-        ] + [
             "//third_party/eigen3",
             "//tensorflow/core/platform:dynamic_annotations",
             "//tensorflow/core/platform:platform_port",
@@ -1546,6 +1549,7 @@ tf_cuda_library(
             "@com_google_protobuf//:protobuf",
         ],
         otherwise = [
+            "//tensorflow/core/util:abstract_stack_trace",
             "@com_google_protobuf//:protobuf_headers",
         ],
     ),
@@ -1634,6 +1638,7 @@ tf_cuda_library(
         "//tensorflow/core/platform/default/build_config:platformlib",
         "//tensorflow/core/profiler/lib:annotated_traceme",
         "//tensorflow/core/profiler/lib:traceme",
+        "//tensorflow/core/util:abstract_stack_trace",
         "//tensorflow/core/util:einsum_op_util",
         "//tensorflow/core/util:padding",
         "//tensorflow/core/util:port",

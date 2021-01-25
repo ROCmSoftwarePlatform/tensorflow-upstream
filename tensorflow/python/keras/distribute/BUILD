@@ -250,6 +250,7 @@ distribute_py_test(
     tags = [
         "no_rocm",  # Intermitently times out on ROCm
         "multi_and_single_gpu",
+        "no_rocm",
     ],
     deps = [
         ":strategy_combinations",
@@ -565,7 +566,11 @@ distribute_py_test(
     shard_count = 7,
     tags = [
         "multi_and_single_gpu",
+<<<<<<< HEAD
         "no_rocm", # Times out on ROCM
+=======
+        "no_rocm",
+>>>>>>> upstream/master
     ],
     xla_tags = [
         "no_cuda_asan",  # times out

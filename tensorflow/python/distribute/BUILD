@@ -161,7 +161,7 @@ py_test(
     size = "small",
     srcs = ["distribute_lib_test.py"],
     python_version = "PY3",
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":combinations",
         ":distribute_lib",
@@ -210,7 +210,7 @@ py_test(
     size = "medium",
     srcs = ["distribute_coordinator_test.py"],
     python_version = "PY3",
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":distribute_coordinator",
         "//tensorflow/core:protos_all_py",
@@ -487,7 +487,7 @@ py_test(
     size = "small",
     srcs = ["numpy_dataset_test.py"],
     python_version = "PY3",
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":numpy_dataset",
         "//tensorflow/python:framework_test_lib",
@@ -547,7 +547,7 @@ py_test(
     name = "multi_worker_util_test",
     srcs = ["multi_worker_util_test.py"],
     python_version = "PY3",
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":multi_worker_util",
         "//tensorflow/core:protos_all_py",
@@ -702,7 +702,7 @@ py_test(
     name = "shared_variable_creator_test",
     srcs = ["shared_variable_creator_test.py"],
     python_version = "PY3",
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     deps = [
         ":shared_variable_creator",
         "//tensorflow/python:framework_test_lib",
@@ -939,7 +939,7 @@ py_library(
 tf_py_test(
     name = "multi_worker_test_base_test",
     srcs = ["multi_worker_test_base_test.py"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
     tags = [
         "no_oss",  # TODO(b/170834611)
     ],
@@ -1742,6 +1742,7 @@ distribute_py_test(
     shard_count = 2,
     tags = [
         "multi_and_single_gpu",
+        "no_rocm",
         "notsan",  # TODO(b/160006974)
         "no_rocm",
     ],
@@ -1775,6 +1776,7 @@ distribute_py_test(
     tags = [
         "multi_and_single_gpu",
         "no_cuda_asan",  # times out
+        "no_rocm",
         "notsan",  # TODO(b/160006974)
         "no_rocm",
     ],

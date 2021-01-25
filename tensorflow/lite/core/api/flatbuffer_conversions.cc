@@ -185,6 +185,10 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
       return ParsePool(op, error_reporter, allocator, builtin_data);
     }
 
+    case BuiltinOperator_BATCH_TO_SPACE_ND: {
+      return ParseBatchToSpaceNd(op, error_reporter, allocator, builtin_data);
+    }
+
     case BuiltinOperator_CEIL: {
       return ParseCeil(op, error_reporter, allocator, builtin_data);
     }
@@ -217,6 +221,10 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
       return ParseExp(op, error_reporter, allocator, builtin_data);
     }
 
+    case BuiltinOperator_EXPAND_DIMS: {
+      return ParseExpandDims(op, error_reporter, allocator, builtin_data);
+    }
+
     case BuiltinOperator_FILL: {
       return ParseFill(op, error_reporter, allocator, builtin_data);
     }
@@ -235,6 +243,10 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
 
     case BuiltinOperator_FULLY_CONNECTED: {
       return ParseFullyConnected(op, error_reporter, allocator, builtin_data);
+    }
+
+    case BuiltinOperator_GATHER_ND: {
+      return ParseGatherNd(op, error_reporter, allocator, builtin_data);
     }
 
     case BuiltinOperator_GREATER: {
@@ -396,6 +408,10 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
 
     case BuiltinOperator_SOFTMAX: {
       return ParseSoftmax(op, error_reporter, allocator, builtin_data);
+    }
+
+    case BuiltinOperator_SPACE_TO_BATCH_ND: {
+      return ParseSpaceToBatchNd(op, error_reporter, allocator, builtin_data);
     }
 
     case BuiltinOperator_SPACE_TO_DEPTH: {
@@ -780,7 +796,6 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
       return kTfLiteOk;
     }
     // Below are the ops with no builtin_data structure.
-    case BuiltinOperator_BATCH_TO_SPACE_ND:
     // TODO(aselle): Implement call in BuiltinOptions, but nullptrs are
     // ok for now, since there is no call implementation either.
     case BuiltinOperator_CALL:
@@ -790,7 +805,6 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
     case BuiltinOperator_ELU:
     case BuiltinOperator_EMBEDDING_LOOKUP:
     case BuiltinOperator_EQUAL:
-    case BuiltinOperator_EXPAND_DIMS:
     case BuiltinOperator_LOG_SOFTMAX:
     case BuiltinOperator_MATRIX_DIAG:
     case BuiltinOperator_MATRIX_SET_DIAG:
@@ -798,14 +812,12 @@ TfLiteStatus ParseOpDataTfLite(const Operator* op, BuiltinOperator op_type,
     case BuiltinOperator_SELECT:
     case BuiltinOperator_SELECT_V2:
     case BuiltinOperator_SLICE:
-    case BuiltinOperator_SPACE_TO_BATCH_ND:
     case BuiltinOperator_TILE:
     case BuiltinOperator_TOPK_V2:
     case BuiltinOperator_TRANSPOSE:
     case BuiltinOperator_RANGE:
     case BuiltinOperator_SQUARED_DIFFERENCE:
     case BuiltinOperator_REVERSE_V2:
-    case BuiltinOperator_GATHER_ND:
     case BuiltinOperator_WHERE:
     case BuiltinOperator_RANK:
     case BuiltinOperator_NON_MAX_SUPPRESSION_V4:
@@ -959,6 +971,14 @@ TfLiteStatus ParseArgMin(const Operator* op, ErrorReporter* error_reporter,
   }
 
   *builtin_data = params.release();
+  return kTfLiteOk;
+}
+
+// We have this parse function instead of directly returning kTfLiteOk from the
+// switch-case in ParseOpData because this function is used as part of the
+// selective registration for the OpResolver implementation in micro.
+TfLiteStatus ParseBatchToSpaceNd(const Operator*, ErrorReporter*,
+                                 BuiltinDataAllocator*, void**) {
   return kTfLiteOk;
 }
 
@@ -1162,6 +1182,14 @@ TfLiteStatus ParseExp(const Operator*, ErrorReporter*, BuiltinDataAllocator*,
 // We have this parse function instead of directly returning kTfLiteOk from the
 // switch-case in ParseOpData because this function is used as part of the
 // selective registration for the OpResolver implementation in micro.
+TfLiteStatus ParseExpandDims(const Operator*, ErrorReporter*,
+                             BuiltinDataAllocator*, void**) {
+  return kTfLiteOk;
+}
+
+// We have this parse function instead of directly returning kTfLiteOk from the
+// switch-case in ParseOpData because this function is used as part of the
+// selective registration for the OpResolver implementation in micro.
 TfLiteStatus ParseFill(const Operator*, ErrorReporter*, BuiltinDataAllocator*,
                        void**) {
   return kTfLiteOk;
@@ -1253,6 +1281,14 @@ TfLiteStatus ParseGather(const Operator* op, ErrorReporter* error_reporter,
   }
 
   *builtin_data = params.release();
+  return kTfLiteOk;
+}
+
+// We have this parse function instead of directly returning kTfLiteOk from the
+// switch-case in ParseOpData because this function is used as part of the
+// selective registration for the OpResolver implementation in micro.
+TfLiteStatus ParseGatherNd(const Operator*, ErrorReporter*,
+                           BuiltinDataAllocator*, void**) {
   return kTfLiteOk;
 }
 
@@ -1732,6 +1768,14 @@ TfLiteStatus ParseSoftmax(const Operator* op, ErrorReporter* error_reporter,
   }
 
   *builtin_data = params.release();
+  return kTfLiteOk;
+}
+
+// We have this parse function instead of directly returning kTfLiteOk from the
+// switch-case in ParseOpData because this function is used as part of the
+// selective registration for the OpResolver implementation in micro.
+TfLiteStatus ParseSpaceToBatchNd(const Operator*, ErrorReporter*,
+                                 BuiltinDataAllocator*, void**) {
   return kTfLiteOk;
 }
 
