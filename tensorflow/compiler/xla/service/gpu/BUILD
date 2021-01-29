@@ -213,6 +213,7 @@ cc_library(
     name = "thunk_emitter",
     srcs = ["thunk_emitter.cc"],
     hdrs = ["thunk_emitter.h"],
+    copts = if_cuda_is_configured(["-DGOOGLE_CUDA=1"]) + if_rocm_is_configured(["-DTENSORFLOW_USE_ROCM=1"]),
     deps = [
         ":backend_configs_cc",
         ":buffer_allocations",
@@ -247,7 +248,7 @@ cc_library(
         "ir_emitter_unnested.h",
         "kernel_mapping_scheme.h",
     ],
-    copts = if_cuda_is_configured(["-DGOOGLE_CUDA=1"]),
+    copts = if_cuda_is_configured(["-DGOOGLE_CUDA=1"]) + if_rocm_is_configured(["-DTENSORFLOW_USE_ROCM=1"]),
     deps = [
         ":backend_configs_cc",
         ":buffer_allocations",
@@ -717,6 +718,13 @@ cc_library(
         "while_thunk.cc",
     ] + if_cuda_is_configured([
         "cholesky_thunk.cc",
+<<<<<<< HEAD
+=======
+        "custom_call_thunk.cc",
+    ]) + if_rocm_is_configured([
+        "cholesky_thunk.cc",
+        "custom_call_thunk.cc",
+>>>>>>> cc2f32d8bc175e22b65961a1e678be8e5ae579b4
     ]),
     hdrs = [
         "collective_permute_thunk.h",
@@ -741,6 +749,13 @@ cc_library(
         "while_thunk.h",
     ] + if_cuda_is_configured([
         "cholesky_thunk.h",
+<<<<<<< HEAD
+=======
+        "custom_call_thunk.h",
+    ]) + if_rocm_is_configured([
+        "cholesky_thunk.h",
+        "custom_call_thunk.h",
+>>>>>>> cc2f32d8bc175e22b65961a1e678be8e5ae579b4
     ]),
     copts = if_cuda_is_configured(["-DGOOGLE_CUDA=1"]),
     deps = [
@@ -908,7 +923,7 @@ cc_library(
     name = "gpu_conv_algorithm_picker",
     srcs = ["gpu_conv_algorithm_picker.cc"],
     hdrs = ["gpu_conv_algorithm_picker.h"],
-    copts = if_cuda_is_configured(["-DGOOGLE_CUDA=1"]),
+    copts = if_cuda_is_configured(["-DGOOGLE_CUDA=1"]) + if_rocm_is_configured(["-DTENSORFLOW_USE_ROCM=1"]),
     deps = [
         ":backend_configs_cc",
         ":gpu_autotuning_proto_cc",
@@ -1024,7 +1039,7 @@ tf_cc_test(
 
 cc_library(
     name = "cusolver_context",
-    srcs = if_cuda_is_configured(["cusolver_context.cc"]),
+    srcs = if_cuda_or_rocm(["cusolver_context.cc"]),
     hdrs = ["cusolver_context.h"],
     deps = [
         "//tensorflow/compiler/xla:statusor",
@@ -1040,14 +1055,18 @@ cc_library(
         # LINT.ThenChange(//tensorflow/copy.bara.sky:cublas_headers)
         "@local_config_cuda//cuda:cuda_headers",
         "//tensorflow/stream_executor/cuda:cusolver_lib",
+    ]) + if_rocm_is_configured([
+        "@local_config_rocm//rocm:rocm_headers",
+        "@local_config_rocm//rocm:rocsolver",
+        "@local_config_rocm//rocm:rocblas",
     ]),
 )
 
 cc_library(
     name = "cusolver_rewriter",
-    srcs = if_cuda_is_configured(["cusolver_rewriter.cc"]),
-    hdrs = if_cuda_is_configured(["cusolver_rewriter.h"]),
-    deps = if_cuda_is_configured([
+    srcs = if_cuda_or_rocm(["cusolver_rewriter.cc"]),
+    hdrs = if_cuda_or_rocm(["cusolver_rewriter.h"]),
+    deps = if_cuda_or_rocm([
         ":cusolver_context",
         ":ir_emission_utils",
         "@com_google_absl//absl/types:optional",
@@ -1569,6 +1588,7 @@ cc_library(
         ":gpu_conv_padding_legalization",
         ":gpu_conv_rewriter",
         ":gpu_layout_assignment",
+        ":cusolver_rewriter",
         ":reduction_degenerate_dim_remover",
         ":reduction_dimension_grouper",
         ":reduction_layout_normalizer",

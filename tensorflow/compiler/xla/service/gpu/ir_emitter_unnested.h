@@ -174,7 +174,7 @@ class IrEmitterUnnested : public IrEmitter,
   Status EmitConvolutionThunkFromMlir(MlirEmitterInput input);
   Status EmitGemmThunkFromMlir(MlirEmitterInput input);
   Status EmitBatchNormThunkFromMlir(MlirEmitterInput input);
-#if GOOGLE_CUDA
+#if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
   Status EmitCholeskyThunkFromMlir(MlirEmitterInput input);
 #endif  // GOOGLE_CUDA
   Status EmitCustomCallThunkFromMlir(MlirEmitterInput input);
