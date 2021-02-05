@@ -45,6 +45,7 @@ from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.util import nest
 from tensorflow.python.util.tf_export import tf_export
+from tensorflow.python.platform import build_info
 
 # TODO(josh11b): Replace asserts in this file with if ...: raise ...
 
@@ -348,13 +349,17 @@ class MirroredExtended(distribute_lib.StrategyExtendedV1):
         "No duplicates allowed in `devices` argument: %s" % (devices,))
     if _is_device_list_single_worker(devices):
       self._initialize_single_worker(devices)
-      if self._prefer_collective_ops and isinstance(
-          self._cross_device_ops,
-          cross_device_ops_lib.NcclAllReduce) or isinstance(
-              self._inferred_cross_device_ops,
-              cross_device_ops_lib.NcclAllReduce):
-        self._use_collective_ops(devices)
-        self._inferred_cross_device_ops = None
+      # The following logic does not work for ROCm because it
+      # can cause the instantiation of more than 1 NcclManager
+      # which is not supported on ROCm.
+      if not build_info.build_info['is_rocm_build']:
+        if self._prefer_collective_ops and isinstance(
+            self._cross_device_ops,
+            cross_device_ops_lib.NcclAllReduce) or isinstance(
+                self._inferred_cross_device_ops,
+                cross_device_ops_lib.NcclAllReduce):
+          self._use_collective_ops(devices)
+          self._inferred_cross_device_ops = None
       logging.info("Using MirroredStrategy with devices %r", devices)
     else:
       self._initialize_multi_worker(devices)
