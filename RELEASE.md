@@ -3934,25 +3934,7 @@ Yasuhiro Matsumoto, ymodak, Yong Tang, Yongfeng Gu, Younes Khoudli, Yuan Lin,
 Yuan (Terry) Tang, Yuchen Ying, Yves-Noel Weweler, zhangyujing, zjjott, zyeric,
 王振华 (Zhenhua Wang), 黄鑫
 
-# Release 1.14.1
-
-## Bug Fixes and Other Changes
-
-*  The 1.14.1 whl package is built with ROCm2.7 user-bit environment
-
 # Release 1.14.0
-
-## ROCm specific features
-
-*   TF-ROCm integrates the ROCm RCCL library as the collective communication
-    routines for mGPU computation
-*   TF-ROCm enables the XLA backend starting 1.14.0 release, currently, it's
-    functionality-complete, performance optimization in progress.
-
-## Known issues
-
-*   We recommend to disable MIOpen 2.0 ASM kernels for GFX803 GPUs using the
-    environment variable: `export MIOPEN_DEBUG_GCN_ASM_KERNELS=0`
 
 ## Major Features and Improvements
 
@@ -4220,18 +4202,6 @@ Wen-Heng (Jack) Chung, wenxizhu, Will Battel, William D. Irons, wyzhao, Xin,
 Yasuhiro Matsumoto, ymodak, Yong Tang, Younes Khoudli, Yuan Lin, Yves-Noel
 Weweler, Zantares, zjjott, 卜居, 王振华 (Wang Zhenhua), 黄鑫
 
-# Release 1.13.4
-
-## Bug Fixes and Other Changes
-
-*   The 1.13.4 whl package is built the ROCm2.6 user-bit environment
-
-# Release 1.13.3
-
-## Bug Fixes and Other Changes
-
-*   The 1.13.3 whl package is built the ROCm2.4 user-bit environment
-
 # Release 1.12.3
 
 ## Bug Fixes and Other Changes
@@ -4248,13 +4218,6 @@ Weweler, Zantares, zjjott, 卜居, 王振华 (Wang Zhenhua), 黄鑫
 *   Fixes a potential security vulnerability where carefully crafted GIF images
     can produce a null pointer dereference during decoding.
 
-# Release 1.13.2
-
-## Bug Fixes and Other Changes
-
-*   TF-RCCL path fix for issue#370
-*   The 1.13.2 whl package is built the ROCm2.3 user-bit environment
-
 # Release 1.13.0
 
 ## Major Features and Improvements
@@ -4263,11 +4226,6 @@ Weweler, Zantares, zjjott, 卜居, 王振华 (Wang Zhenhua), 黄鑫
 * TensorFlow GPU binaries are now built against CUDA 10 and TensorRT 5.0.
 * Support for Python3.7 on all operating systems.
 * Moved NCCL to core.
-
-## ROCm Features and Improvements
-
-*   MIOpen v1.7.1 integration
-*   Tensorflow VERBS support is enabled, details in: [TensorFlow Verbs Quick-Start](https://github.com/ROCmSoftwarePlatform/tensorflow-upstream/blob/r1.13-rocm/rocm_docs/tensorflow-verbs.md)
 
 ## Behavioral changes
 
@@ -4473,13 +4431,6 @@ Abhinav Upadhyay, Ag Ramesh, akikaaa, Alexis Louis, Anders Huss, Andreas Madsen,
 *   TensorFlow binaries are built with XLA support linked in by default.
 *   Ignite Dataset added to contrib/ignite that allows to work with Apache
     Ignite.
-
-## ROCm Features and Improvements
-
-*   MIOpenv1.6 integration
-*   Training in fp16 is fully supported
-*   Performance improvements in TF CNN benchmarks
-*   Layer fusion is supported, details in: [TensorFlow ROCm port high-level design document](https://github.com/ROCmSoftwarePlatform/tensorflow-upstream/blob/r1.12-rocm/rocm_docs/rocm-port-overview.md)
 
 ## Bug Fixes and Other Changes
 
