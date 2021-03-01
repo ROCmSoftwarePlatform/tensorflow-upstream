@@ -466,7 +466,7 @@ tf_py_test(
 
 cuda_py_test(
     name = "convolutional_test",
-    size = "large",
+    size = "medium",
     srcs = ["convolutional_test.py"],
     python_version = "PY3",
     shard_count = 8,
