@@ -2,7 +2,6 @@
 
 load("//tensorflow:tensorflow.bzl", "tf_custom_op_library")
 load("//tensorflow:tensorflow.bzl", "cuda_py_test")
-load("//tensorflow:tensorflow.bzl", "gpu_py_test")
 
 # buildifier: disable=same-origin-load
 load("//tensorflow:tensorflow.bzl", "tf_py_test")
@@ -3931,30 +3930,6 @@ cuda_py_test(
         "//tensorflow/python:while_v2",
         "//tensorflow/python/eager:def_function",
         "@absl_py//absl/testing:parameterized",
-    ],
-)
-
-gpu_py_test(
-    name = "gpu_fusion_ops_test",
-    size = "small",
-    srcs = ["gpu_fusion_ops_test.py"],
-    deps = [
-        "//third_party/py/numpy",
-        "//tensorflow/core:protos_all_py",
-        "//tensorflow/python:array_ops",
-        "//tensorflow/python:client",
-        "//tensorflow/python:client_testlib",
-        "//tensorflow/python:errors",
-        "//tensorflow/python:framework_for_generated_wrappers",
-        "//tensorflow/python:framework_test_lib",
-        "//tensorflow/python:nn",
-        "//tensorflow/python:nn_grad",
-        "//tensorflow/python:nn_ops",
-        "//tensorflow/python:gradients",
-        "//tensorflow/python:math_ops",
-        "//tensorflow/python:platform",
-        "//tensorflow/python:random_ops",
-        "//tensorflow/python:variables",
     ],
 )
 
