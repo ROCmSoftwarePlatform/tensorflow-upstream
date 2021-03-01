@@ -526,7 +526,7 @@ class AutoMixedPrecisionTest(test.TestCase, parameterized.TestCase):
     random_seed.set_random_seed(0)
     x = _input([2, 8, 8, 1])
     y = _conv_bn(x)
-    y = nn.dropout(y, rate=0.5, seed=1337)
+    y = nn.dropout(y, rate=0.5)
     y = math_ops.add(y, 1, name='addition')
     y = _conv_bn(y)
     y = array_ops.identity(y)

@@ -1086,10 +1086,6 @@ def _L2LossGrad(op, grad):
   """
   return op.inputs[0] * grad
 
-@ops.RegisterGradient("Dropout")
-def _DropoutGrad(op, grad, _):
-  dx = gen_nn_ops.dropout_grad(grad, op.inputs[1], op.outputs[1])
-  return [dx, None, None, None]
 
 @ops.RegisterGradient("TopK")
 @ops.RegisterGradient("TopKV2")

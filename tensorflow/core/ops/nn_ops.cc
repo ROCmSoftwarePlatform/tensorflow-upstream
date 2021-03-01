@@ -328,27 +328,6 @@ REGISTER_OP("BiasAddV1")
     .SetShapeFn(shape_inference::BiasAddShape);
 // --------------------------------------------------------------------------
 
-REGISTER_OP("Dropout")
-    .Input("input: T")
-    .Input("rate: T")
-    .Input("noise_shape: int32")
-    .Input("seed: Tseed")
-    .Output("output: T")
-    .Output("mask: uint8")
-    .Attr("T: {float, half, double}")
-    .Attr("Tseed: {int32, int64}")
-    .SetShapeFn(shape_inference::UnchangedShape);
-
-REGISTER_OP("DropoutGrad")
-    .Input("gradients: T")
-    .Input("rate: T")
-    .Input("mask: uint8")
-    .Output("backprops: T")
-    .Attr("T: {float, half, double}")
-    .SetShapeFn(shape_inference::UnchangedShape);
-
-// --------------------------------------------------------------------------
-
 REGISTER_OP("Conv2D")
     .Input("input: T")
     .Input("filter: T")
