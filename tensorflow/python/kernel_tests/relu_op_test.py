@@ -499,54 +499,6 @@ class EluTest(test.TestCase):
     self.assertLess(err, 1e-6)
 
 
-
-class GeluTest(test.TestCase):
-
-  def _npGelu(self, x):
-    y = (np.sqrt(2 / np.pi) * (x + 0.044715 * x*x*x))
-    cdf = 0.5 * (1.0 + np.tanh(y))
-    return x * cdf
-
-  def _testGelu(self, np_features):
-    np_gelu = self._npGelu(np_features)
-    tf_gelu = nn_ops.gelu(np_features, approximate=True)
-    self.assertAllCloseAccordingToType(np_gelu, tf_gelu)
-    self.assertShapeEqual(np_gelu, tf_gelu)
-
-  def testNumbersCPU(self):
-    for t in [np.float16, np.float32, np.float64]:
-      # Force execution on CPU even if a GPU kernel is available for the type.
-      with ops.device("/device:CPU:0"):
-        self._testGelu(
-            np.array([[-9, 7, -5, 3, -1], [1, -3, 5, -7, 9]]).astype(t))
-
-  def testNumbersGPU(self):
-    if not test.is_gpu_available():
-      self.skipTest("No GPU available")
-    for t in [np.float16, np.float32, np.float64]:
-      self._testGelu(np.array([[-9, 7, -5, 3, -1],
-                               [1, -3, 5, -7, 9]]).astype(t))
-
-  def testGradients(self):
-    for t in [np.float16, np.float32, np.float64]:
-      for gpu in [True, False]:
-        if gpu and not test.is_gpu_available():
-          continue
-        delta = 2e-2 if t == np.float16 else 1e-3
-        tol = 2e-2 if t == np.float16 else (1e-4 if t == np.float32 else 1e-6)
-        def approx_gelu(x):
-          return nn_ops.gelu(x, approximate=True)
-        with self.session(use_gpu=gpu):
-          x_val = [[-0.9, -0.7, -0.5, -0.3, -0.1], [0.1, 0.3, 0.5, 0.7, 0.9]]
-          x = np.asarray(x_val, dtype=t, order="F")
-          e1, e2 = gradient_checker_v2.compute_gradient(approx_gelu,
-                                                        [x], delta=delta)
-          err = gradient_checker_v2.max_error(
-              e1, e2)
-          print(e1, e2)
-          print("gelu", t, "GPU" if gpu else "CPU", "gradient err = ", err)
-          self.assertLess(err, tol)
-
 class SeluTest(test.TestCase):
 
   def _npSelu(self, np_features):
