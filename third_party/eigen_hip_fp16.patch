@@ -1,5 +1,5 @@
 diff --git a/Eigen/src/Core/arch/Default/Half.h b/Eigen/src/Core/arch/Default/Half.h
-index c91b0ce2f..9ae3cb5d6 100644
+index 3779ebc98..0da6f5f3d 100644
 --- a/Eigen/src/Core/arch/Default/Half.h
 +++ b/Eigen/src/Core/arch/Default/Half.h
 @@ -63,10 +63,37 @@ struct half;
@@ -26,10 +26,10 @@ index c91b0ce2f..9ae3cb5d6 100644
 +//
 +// Making the host side compile phase of hipcc use the same Eigen::half impl, as the gcc compile, resolves
 +// this error, and hence the following convoluted #if condition
-+#if !defined(EIGEN_HAS_GPU_FP16) || (defined(EIGEN_HAS_HIP_FP16) && defined(EIGEN_HIP_HOST_COMPILE))
++#if !defined(EIGEN_HAS_GPU_FP16) || (defined(EIGEN_HAS_GPU_FP16) && !defined(EIGEN_GPU_COMPILE_PHASE))
  // Make our own __half_raw definition that is similar to CUDA's.
  struct __half_raw {
-+#if (defined(EIGEN_HAS_HIP_FP16) && defined(EIGEN_HIP_HOST_COMPILE))
++#if (defined(EIGEN_HAS_HIP_FP16) && !defined(EIGEN_HIP_DEVICE_COMPILE))
 +  // Eigen::half can be used as the datatype for some shared memory declarations (in Eigen and TF)
 +  // (In HIP) The element type for shared memory declaration cannot have non-trivial constructors
 +  // and hence the following special casing (which skips the zero-initilization)
@@ -41,28 +41,24 @@ index c91b0ce2f..9ae3cb5d6 100644
  #if defined(EIGEN_HAS_ARM64_FP16_SCALAR_ARITHMETIC)
    explicit EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR __half_raw(numext::uint16_t raw) : x(numext::bit_cast<__fp16>(raw)) {
    }
-@@ -118,8 +145,13 @@ struct half : public half_impl::half_base {
- #if !defined(EIGEN_HAS_GPU_FP16)
+@@ -115,7 +142,10 @@ struct half : public half_impl::half_base {
+ 
+   // Writing this out as separate #if-else blocks to make the code easier to follow
+   // The same applies to most #if-else blocks in this file
+-#if !defined(EIGEN_HAS_GPU_FP16)
++#if !defined(EIGEN_HAS_GPU_FP16) || (defined(EIGEN_HAS_GPU_FP16) && !defined(EIGEN_GPU_COMPILE_PHASE))
++  // Use the same base class for the following two scenarios
++  // * when compiling without GPU support enabled
++  // * during host compile phase when compiling with GPU support enabled
    typedef half_impl::__half_raw __half_raw;
  #elif defined(EIGEN_HAS_HIP_FP16)
--  // Nothing to do here
--  // HIP fp16 header file has a definition for __half_raw
-+  #if defined(EIGEN_HIP_DEVICE_COMPILE)
-+    // Nothing to do here
-+    // HIP fp16 header file has a definition for __half_raw, and we will use that
-+  #else
-+    // For the host-side compile, use the __half_raw definition from above
-+    typedef half_impl::__half_raw __half_raw;
-+  #endif
- #elif defined(EIGEN_HAS_CUDA_FP16)
-   // Note that EIGEN_CUDA_SDK_VER is set to 0 even when compiling with HIP, so
-   // (EIGEN_CUDA_SDK_VER < 90000) is true even for HIP!  So keeping this within
-@@ -161,6 +193,14 @@ struct half : public half_impl::half_base {
+   // Nothing to do here
+@@ -161,6 +191,14 @@ struct half : public half_impl::half_base {
     EIGEN_DEVICE_FUNC operator float() const {  // NOLINT: Allow implicit conversion to float, because it is lossless.
      return half_impl::half_to_float(*this);
    }
 +
-+#if defined(EIGEN_HAS_HIP_FP16) && defined(EIGEN_HIP_HOST_COMPILE)
++#if defined(EIGEN_HAS_HIP_FP16) && !defined(EIGEN_HIP_DEVICE_COMPILE)
 +  EIGEN_DEVICE_FUNC operator __half() const {
 +    ::__half_raw hr;
 +    hr.x = x;
@@ -72,16 +68,3 @@ index c91b0ce2f..9ae3cb5d6 100644
  };
  
  } // end namespace Eigen
-diff --git a/Eigen/src/Core/util/Macros.h b/Eigen/src/Core/util/Macros.h
-index b39c6ca43..0c28990ba 100644
---- a/Eigen/src/Core/util/Macros.h
-+++ b/Eigen/src/Core/util/Macros.h
-@@ -480,6 +480,8 @@
-   #if defined(__HIP_DEVICE_COMPILE__)
-     // analogous to EIGEN_CUDA_ARCH, but for HIP
-     #define EIGEN_HIP_DEVICE_COMPILE __HIP_DEVICE_COMPILE__
-+  #else
-+    #define EIGEN_HIP_HOST_COMPILE 1
-   #endif
- 
-   // For HIP (ROCm 3.5 and higher), we need to explicitly set the launch_bounds attribute
