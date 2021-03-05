@@ -1,5 +1,5 @@
 diff --git a/Eigen/src/Core/arch/Default/Half.h b/Eigen/src/Core/arch/Default/Half.h
-index 3779ebc98..0da6f5f3d 100644
+index 3779ebc98..12ed8f676 100644
 --- a/Eigen/src/Core/arch/Default/Half.h
 +++ b/Eigen/src/Core/arch/Default/Half.h
 @@ -63,10 +63,37 @@ struct half;
@@ -26,7 +26,7 @@ index 3779ebc98..0da6f5f3d 100644
 +//
 +// Making the host side compile phase of hipcc use the same Eigen::half impl, as the gcc compile, resolves
 +// this error, and hence the following convoluted #if condition
-+#if !defined(EIGEN_HAS_GPU_FP16) || (defined(EIGEN_HAS_GPU_FP16) && !defined(EIGEN_GPU_COMPILE_PHASE))
++#if !defined(EIGEN_HAS_GPU_FP16) || !defined(EIGEN_GPU_COMPILE_PHASE)
  // Make our own __half_raw definition that is similar to CUDA's.
  struct __half_raw {
 +#if (defined(EIGEN_HAS_HIP_FP16) && !defined(EIGEN_HIP_DEVICE_COMPILE))
@@ -34,7 +34,7 @@ index 3779ebc98..0da6f5f3d 100644
 +  // (In HIP) The element type for shared memory declaration cannot have non-trivial constructors
 +  // and hence the following special casing (which skips the zero-initilization)
 +  // Note that this check gets done even in the host compilation phase, and hence the need for this
-+  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR __half_raw() {}
++  EIGEN_DEVICE_FUNC __half_raw() {}
 +#else
    EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR __half_raw() : x(0) {}
 +#endif
@@ -46,7 +46,7 @@ index 3779ebc98..0da6f5f3d 100644
    // Writing this out as separate #if-else blocks to make the code easier to follow
    // The same applies to most #if-else blocks in this file
 -#if !defined(EIGEN_HAS_GPU_FP16)
-+#if !defined(EIGEN_HAS_GPU_FP16) || (defined(EIGEN_HAS_GPU_FP16) && !defined(EIGEN_GPU_COMPILE_PHASE))
++#if !defined(EIGEN_HAS_GPU_FP16) || !defined(EIGEN_GPU_COMPILE_PHASE)
 +  // Use the same base class for the following two scenarios
 +  // * when compiling without GPU support enabled
 +  // * during host compile phase when compiling with GPU support enabled
@@ -58,7 +58,7 @@ index 3779ebc98..0da6f5f3d 100644
      return half_impl::half_to_float(*this);
    }
 +
-+#if defined(EIGEN_HAS_HIP_FP16) && !defined(EIGEN_HIP_DEVICE_COMPILE)
++#if defined(EIGEN_HAS_GPU_FP16) && !defined(EIGEN_GPU_COMPILE_PHASE)
 +  EIGEN_DEVICE_FUNC operator __half() const {
 +    ::__half_raw hr;
 +    hr.x = x;
