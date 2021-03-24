@@ -17,56 +17,6 @@ limitations under the License.
 
 #include "tensorflow/compiler/xla/util.h"
 
-// we can't include core/util/gpu_device_functions.h (where these are defined),
-// because this file is not compiled with hipcc
-#if GOOGLE_CUDA
-using gpuFloatComplex = cuFloatComplex;
-using gpuDoubleComplex = cuDoubleComplex;
-using gpuStream_t = gpuStream_t;
-using gpuEvent_t = cudaEvent_t;
-#define gpuEventRecord cudaEventRecord
-#define gpuEventSynchronize cudaEventSynchronize
-#define gpuEventDestroy cudaEventDestroy
-#define gpuEventCreate cudaEventCreate
-#define gpuEventCreateWithFlags cudaEventCreateWithFlags
-#define gpuEventDisableTiming cudaEventDisableTiming
-#define gpuDeviceSynchronize cudaDeviceSynchronize
-#define gpuFree cudaFree
-#elif TENSORFLOW_USE_ROCM
-#include "rocm/include/hip/hip_complex.h"
-
-using gpuFloatComplex = hipFloatComplex;
-using gpuDoubleComplex = hipDoubleComplex;
-using gpuStream_t = hipStream_t;
-using gpuEvent_t = hipEvent_t;
-using cudaError = int;
-using cudaError_t = int;
-#define cudaSuccess 0
-/*
-#define cudaGetLastError hipGetLastError
-#define gpuEventRecord hipEventRecord
-#define gpuEventDestroy hipEventDestroy
-#define gpuEventSynchronize hipEventSynchronize
-#define gpuEventCreate hipEventCreate
-#define gpuEventCreateWithFlags hipEventCreateWithFlags
-#define gpuEventDisableTiming hipEventDisableTiming
-#define gpuDeviceSynchronize hipDeviceSynchronize
-#define gpuFree hipFree
-*/
-using cublasFillMode_t = rocblas_fill;
-using cusolverStatus_t = rocsolver_status;
-
-#define cusolverDnCreate rocblas_create_handle
-#define cusolverDnSetStream rocblas_set_stream
-#define cusolverDnDestroy rocblas_destroy_handle
-
-#define CUBLAS_FILL_MODE_UPPER rocblas_fill_upper
-#define CUBLAS_FILL_MODE_LOWER rocblas_fill_lower
-
-#endif
-
-
-
 namespace xla {
 namespace gpu {
 
@@ -104,6 +54,8 @@ inline typename CUDAComplexT<T>::type* ToDevicePointer(se::DeviceMemory<T> p) {
   return static_cast<typename CUDAComplexT<T>::type*>(p.opaque());
 }
 
+#if GOOGLE_CUDA
+
 cublasFillMode_t CUDABlasUpperLower(se::blas::UpperLower uplo) {
   switch (uplo) {
     case se::blas::UpperLower::kUpper:
@@ -115,7 +67,6 @@ cublasFillMode_t CUDABlasUpperLower(se::blas::UpperLower uplo) {
   }
 }
 
-#if GOOGLE_CUDA
 // Converts a cuSolver status to a Status.
 Status CusolverStatusToStatus(cusolverStatus_t status) {
   switch (status) {
@@ -147,7 +98,20 @@ Status CusolverStatusToStatus(cusolverStatus_t status) {
       return Unknown("Unknown cuSolver error");
   }
 }
+
 #else
+
+rocblas_fill CUDABlasUpperLower(se::blas::UpperLower uplo) {
+  switch (uplo) {
+    case se::blas::UpperLower::kUpper:
+      return rocblas_fill_upper;
+    case se::blas::UpperLower::kLower:
+      return rocblas_fill_lower;
+    default:
+      LOG(FATAL) << "Invalid value of blas::UpperLower.";
+  }
+}
+
 // Converts a cuSolver status to a Status.
 Status CusolverStatusToStatus(rocblas_status status) {
   switch(status) {
@@ -181,6 +145,13 @@ Status CusolverStatusToStatus(rocblas_status status) {
       return Unknown("Unknown rocsolver error");
   }
 }
+
+#define cusolverDnCreate rocblas_create_handle
+#define cusolverDnSetStream rocblas_set_stream
+#define cusolverDnDestroy rocblas_destroy_handle
+
+#define gpuStream_t hipStream_t
+
 #endif
 
 }  // namespace
