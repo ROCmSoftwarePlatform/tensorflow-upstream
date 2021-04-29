@@ -63,8 +63,9 @@ string NcclCollectiveKey(const string& exec_key, int step_id) {
 }
 }  // namespace
 
-std::unique_ptr<NcclCommunicatorInterface> MaybeCreateNcclCommunicator() {
-  return absl::make_unique<NcclCommunicator>();
+std::unique_ptr<NcclCommunicatorInterface> MaybeCreateNcclCommunicator(
+    bool enable) {
+  return (enable) ? absl::make_unique<NcclCommunicator>(): nullptr;
 }
 
 void NcclCommunicator::Enqueue(std::shared_ptr<CollectiveContext> col_ctx,

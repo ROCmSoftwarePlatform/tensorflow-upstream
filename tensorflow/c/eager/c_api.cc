@@ -112,7 +112,8 @@ void TFE_ContextOptionsSetDevicePlacementPolicy(
 
 void TFE_DeleteContextOptions(TFE_ContextOptions* options) { delete options; }
 
-TFE_Context* TFE_NewContext(const TFE_ContextOptions* opts, TF_Status* status) {
+TFE_Context* TFE_NewContext(const TFE_ContextOptions* opts, TF_Status* status,
+                            unsigned char enableNcclCommunicator) {
   if (opts->use_tfrt) {
 #if defined(PLATFORM_GOOGLE) && !defined(LIBTPU_ON_GCE)
     tfrt::tf::ContextInterface* tfrt_context = new tfrt::tf::ContextInterface(
@@ -148,7 +149,8 @@ TFE_Context* TFE_NewContext(const TFE_ContextOptions* opts, TF_Status* status) {
       opts->async, device_mgr.release(),
       /*device_mgr_owned*/ true, r,
       /*cluster_flr=*/nullptr,
-      /*run_eager_op_as_function=*/opts->run_eager_op_as_function);
+      /*run_eager_op_as_function=*/opts->run_eager_op_as_function,
+      enableNcclCommunicator);
 #if !defined(IS_MOBILE_PLATFORM)
   eager_context->SetDistributedManager(
       std::make_unique<tensorflow::EagerContextDistributedManager>(
