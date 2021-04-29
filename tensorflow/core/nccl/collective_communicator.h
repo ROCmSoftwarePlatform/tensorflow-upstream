@@ -21,8 +21,8 @@ namespace tensorflow {
 
 // Creates a NcclCommunicator if built with NCCL support, otherwise it returns
 // nullptr.
-std::unique_ptr<NcclCommunicatorInterface> MaybeCreateNcclCommunicator();
-
+std::unique_ptr<NcclCommunicatorInterface>
+   MaybeCreateNcclCommunicator(bool enable = true);
 }  // namespace tensorflow
 
 #endif  // TENSORFLOW_CORE_NCCL_COLECTIVE_COMMUNICATOR_H_

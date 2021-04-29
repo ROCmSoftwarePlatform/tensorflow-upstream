@@ -137,7 +137,11 @@ LogicalResult ConstantFoldFallbackHook(
     // policy to fail if no CPU kernels are available for the op.
     TFE_ContextOptionsSetDevicePlacementPolicy(opts,
                                                TFE_DEVICE_PLACEMENT_EXPLICIT);
+#if TENSORFLOW_USE_ROCM
+    auto ctx = TFE_NewContext(opts, status, false);
+#else
     auto ctx = TFE_NewContext(opts, status);
+#endif
     TFE_DeleteContextOptions(opts);
     TF_DeleteStatus(status);
     return ctx;

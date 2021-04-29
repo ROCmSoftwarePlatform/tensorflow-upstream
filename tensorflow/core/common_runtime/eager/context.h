@@ -100,7 +100,8 @@ class EagerContext : public ImmediateExecutionContext, public core::RefCounted {
                bool async, /*const*/ DeviceMgr* device_mgr,
                bool device_mgr_owned, /*const*/ Rendezvous* rendezvous,
                DistributedFunctionLibraryRuntime* cluster_flr = nullptr,
-               bool run_eager_op_as_function = false);
+               bool run_eager_op_as_function = false,
+               bool enableNcclCommunicator = true);
 
   void Release() override { Unref(); }
 

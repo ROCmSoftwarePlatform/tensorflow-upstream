@@ -79,7 +79,7 @@ EagerContext::EagerContext(
     ContextDevicePlacementPolicy default_device_placement_policy, bool async,
     DeviceMgr* device_mgr, bool device_mgr_owned, Rendezvous* rendezvous,
     DistributedFunctionLibraryRuntime* cluster_flr,
-    bool run_eager_op_as_function)
+    bool run_eager_op_as_function, bool enableNcclCommunicator)
     : ImmediateExecutionContext(kEager),
       opts_(opts),
       default_device_placement_policy_(default_device_placement_policy),
@@ -126,7 +126,8 @@ EagerContext::EagerContext(
       "/job:localhost/replica:0/task:0"));
   collective_executor_mgr_.Reset(
       new CollectiveExecutorMgr(opts.config, local_device_mgr(), std::move(drl),
-                                std::move(cprl), MaybeCreateNcclCommunicator()),
+                                std::move(cprl), MaybeCreateNcclCommunicator(
+                                enableNcclCommunicator)),
       /*owned=*/true);
   global_rendezvous_for_functions_ =
       core::RefCountPtr<Rendezvous>(CreateRendezvous(-1));
