@@ -343,7 +343,7 @@ struct GeluGrad<GPUDevice, T> {
   template struct functor::Gelu<GPUDevice, T>;          \
   template struct functor::GeluGrad<GPUDevice, T>;
 
-TF_CALL_GPU_NUMBER_TYPES(DEFINE_GPU_KERNELS);
+TF_CALL_GPU_NUMBER_TYPES_NO_BF16(DEFINE_GPU_KERNELS);
 template struct functor::Relu<GPUDevice, qint8>;
 
 }  // end namespace tensorflow

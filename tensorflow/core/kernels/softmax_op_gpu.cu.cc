@@ -285,14 +285,14 @@ class SoftmaxOpGPU : public OpKernel {
   REGISTER_KERNEL_BUILDER(                                       \
       Name("Softmax").Device(DEVICE_GPU).TypeConstraint<T>("T"), \
       SoftmaxOpGPU<T>);
-TF_CALL_GPU_NUMBER_TYPES(REGISTER_GPU);
+TF_CALL_GPU_NUMBER_TYPES_NO_BF16(REGISTER_GPU);
 
 #undef REGISTER_GPU
 #define REGISTER_GPU(T)                                             \
   REGISTER_KERNEL_BUILDER(                                          \
       Name("LogSoftmax").Device(DEVICE_GPU).TypeConstraint<T>("T"), \
       SoftmaxOpGPU<T>);
-TF_CALL_GPU_NUMBER_TYPES(REGISTER_GPU);
+TF_CALL_GPU_NUMBER_TYPES_NO_BF16(REGISTER_GPU);
 
 #undef REGISTER_GPU
 

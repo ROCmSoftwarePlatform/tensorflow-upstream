@@ -1022,6 +1022,12 @@ class BlasSupport {
   // batched version of the half-precision interface.
   virtual bool DoBlasGemm(Stream *stream, blas::Transpose transa,
                           blas::Transpose transb, uint64 m, uint64 n, uint64 k,
+                          float alpha, const DeviceMemory<Eigen::bfloat16> &a,
+                          int lda, const DeviceMemory<Eigen::bfloat16> &b, int ldb,
+                          float beta, DeviceMemory<Eigen::bfloat16> *c,
+                          int ldc) = 0;
+  virtual bool DoBlasGemm(Stream *stream, blas::Transpose transa,
+                          blas::Transpose transb, uint64 m, uint64 n, uint64 k,
                           float alpha, const DeviceMemory<Eigen::half> &a,
                           int lda, const DeviceMemory<Eigen::half> &b, int ldb,
                           float beta, DeviceMemory<Eigen::half> *c,
@@ -2005,6 +2011,11 @@ class BlasSupport {
                   blas::Transpose trans, blas::Diagonal diag, uint64 n,        \
                   const DeviceMemory<std::complex<double>> &a, int lda,        \
                   DeviceMemory<std::complex<double>> *x, int incx) override;   \
+  bool DoBlasGemm(Stream *stream, blas::Transpose transa,                      \
+                  blas::Transpose transb, uint64 m, uint64 n, uint64 k,        \
+                  float alpha, const DeviceMemory<Eigen::bfloat16> &a, int lda,\
+                  const DeviceMemory<Eigen::bfloat16> &b, int ldb, float beta, \
+                  DeviceMemory<Eigen::bfloat16> *c, int ldc) override;         \
   bool DoBlasGemm(Stream *stream, blas::Transpose transa,                      \
                   blas::Transpose transb, uint64 m, uint64 n, uint64 k,        \
                   float alpha, const DeviceMemory<Eigen::half> &a, int lda,    \

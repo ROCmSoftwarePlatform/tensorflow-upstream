@@ -23,6 +23,7 @@ namespace tensorflow {
 using Eigen::GpuDevice;
 
 template struct functor::TopKFunctor<GPUDevice, Eigen::half>;
+template struct functor::TopKFunctor<GPUDevice, bfloat16>;
 }  // namespace tensorflow
 
 #endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM

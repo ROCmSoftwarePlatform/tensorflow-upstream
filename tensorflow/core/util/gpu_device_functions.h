@@ -631,33 +631,47 @@ __device__ double GpuAtomicCasHelper(double* ptr, F accumulate) {
 // switching to fp16 as late as you can in the calculations.
 //
 // Note: Assumes little endian.
-template <typename F>
-__device__ Eigen::half GpuAtomicCasHelper(Eigen::half* ptr, F accumulate) {
+template <typename F, typename T>
+__device__ T GpuAtomicCasHelper2B(T* ptr, F accumulate) {
 #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
   static_assert(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__, "Not little endian");
 #endif
-  namespace half_impl = Eigen::half_impl;
   intptr_t intptr = reinterpret_cast<intptr_t>(ptr);
+  uint16 res16;
   assert(!(intptr & 0x1));  // should be 2-aligned.
   if (intptr & 0x2) {
     // The half is in the second part of the uint32 (upper 16 bits).
     uint32* address = reinterpret_cast<uint32*>(intptr - 2);
     uint32 result = GpuAtomicCasHelper(address, [accumulate](uint32 arg) {
       unsigned short high = static_cast<unsigned short>(arg >> 16);
-      Eigen::half acc = accumulate(half_impl::raw_uint16_to_half(high));
-      return (static_cast<uint32>(acc.x) << 16) | (arg & 0xffff);
+      T acc = accumulate(reinterpret_cast<const T&>(high));
+      uint16 acc16 = reinterpret_cast<uint16&>(acc);
+      return (static_cast<uint32>(acc16) << 16) | (arg & 0xffff);
     });
-    return half_impl::raw_uint16_to_half(static_cast<uint16>(result >> 16));
+    res16 = static_cast<uint16>(result >> 16);
   } else {
     // The half is in the first part of the uint32 (lower 16 bits).
     uint32* address = reinterpret_cast<uint32*>(intptr);
     uint32 result = GpuAtomicCasHelper(address, [accumulate](uint32 arg) {
       unsigned short low = static_cast<unsigned short>(arg & 0xffff);
-      Eigen::half acc = accumulate(half_impl::raw_uint16_to_half(low));
-      return (arg & 0xffff0000) | static_cast<uint32>(acc.x);
+      T acc = accumulate(reinterpret_cast<const T&>(low));
+      uint16 acc16 = reinterpret_cast<uint16&>(acc);
+      return (arg & 0xffff0000) | static_cast<uint32>(acc16);
     });
-    return half_impl::raw_uint16_to_half(static_cast<uint16>(result & 0xffff));
+    res16 = static_cast<uint16>(result & 0xffff);
   }
+  T retval = reinterpret_cast<T&>(res16);
+  return retval;
+}
+
+template <typename F>
+__device__ Eigen::half GpuAtomicCasHelper(Eigen::half* ptr, F accumulate) {
+  return GpuAtomicCasHelper2B(ptr, accumulate);
+}
+
+template <typename F>
+__device__ bfloat16 GpuAtomicCasHelper(bfloat16* ptr, F accumulate) {
+  return GpuAtomicCasHelper2B(ptr, accumulate);
 }
 
 template <typename F>
@@ -721,6 +735,25 @@ __device__ inline Eigen::half GpuAtomicAdd(Eigen::half* ptr,
   return detail::GpuAtomicCasHelper(
       ptr, [value](Eigen::half a) { return a + value; });
 }
+
+__device__ inline bfloat16 GpuAtomicAdd(bfloat16* ptr,
+                                           bfloat16 value) {
+  return detail::GpuAtomicCasHelper(
+      ptr, [value](bfloat16 a) { return a + value; });
+}
+
+__device__ inline bfloat16 GpuAtomicMax(bfloat16* ptr,
+                                           bfloat16 value) {
+  return detail::GpuAtomicCasHelper(
+      ptr, [value](bfloat16 a) { return max(a, value); });
+}
+
+__device__ inline bfloat16 GpuAtomicMin(bfloat16* ptr,
+                                           bfloat16 value) {
+  return detail::GpuAtomicCasHelper(
+      ptr, [value](bfloat16 a) { return min(a, value); });
+}
+
 
 #if (__CUDA_ARCH__ < 600) || TENSORFLOW_USE_ROCM
 __device__ inline double GpuAtomicAdd(double* ptr, double value) {

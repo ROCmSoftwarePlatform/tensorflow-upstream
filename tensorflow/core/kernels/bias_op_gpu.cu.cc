@@ -48,6 +48,11 @@ struct AccumulatorType<Eigen::half> {
   typedef float type;
 };
 
+template <>
+struct AccumulatorType<bfloat16> {
+  typedef float type;
+};
+
 // Definition of the GPU implementations declared in bias_op.cc.
 
 template <typename T>

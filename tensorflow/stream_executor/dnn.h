@@ -1711,6 +1711,17 @@ class DnnSupport {
   virtual bool DoPoolForward(Stream* stream,
                              const dnn::PoolingDescriptor& pooling_dimensions,
                              const dnn::BatchDescriptor& input_dimensions,
+                             const DeviceMemory<Eigen::bfloat16>& input_data,
+                             const dnn::BatchDescriptor& output_dimensions,
+                             DeviceMemory<Eigen::bfloat16>* output_data,
+                             ScratchAllocator* workspace_allocator) {
+    LOG(FATAL) << "DoPoolForward not implemented for Eigen::bfloat16.";
+    return false;
+  }
+
+  virtual bool DoPoolForward(Stream* stream,
+                             const dnn::PoolingDescriptor& pooling_dimensions,
+                             const dnn::BatchDescriptor& input_dimensions,
                              const DeviceMemory<Eigen::half>& input_data,
                              const dnn::BatchDescriptor& output_dimensions,
                              DeviceMemory<Eigen::half>* output_data,
@@ -1767,6 +1778,19 @@ class DnnSupport {
                               DeviceMemory<Eigen::half>* output_diff_data,
                               ScratchAllocator* workspace_allocator) {
     LOG(FATAL) << "DoPoolBackward not implemented.";
+    return false;
+  }
+
+  virtual bool DoPoolBackward(Stream* stream,
+                              const dnn::PoolingDescriptor& pooling_dimensions,
+                              const dnn::BatchDescriptor& input_dimensions,
+                              const DeviceMemory<Eigen::bfloat16>& input_data,
+                              const dnn::BatchDescriptor& output_dimensions,
+                              const DeviceMemory<Eigen::bfloat16>& output_data,
+                              const DeviceMemory<Eigen::bfloat16>& input_diff_data,
+                              DeviceMemory<Eigen::bfloat16>* output_diff_data,
+                              ScratchAllocator* workspace_allocator) {
+    LOG(FATAL) << "DoPoolBackward not implemented for Eigen::bfloat16.";
     return false;
   }
 

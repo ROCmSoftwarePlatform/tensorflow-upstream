@@ -316,6 +316,17 @@ struct storage_type<std::complex<T2>> {
   }
 };
 
+template <>
+struct storage_type<bfloat16> {
+  uint16 val;
+  __host__ __device__ storage_type() {}
+  __host__ __device__ operator bfloat16() { return *(const bfloat16*)&val; }
+  __host__ __device__ storage_type<bfloat16>& operator=(const bfloat16& in) {
+    val = *(const uint16*)&in;
+    return *this;
+  }
+};
+
 // Works only if there are <= 16 columns
 // each warps sums over multiple rows at once
 template <typename T, typename OUT_T, typename Op, int _WARPSIZE>

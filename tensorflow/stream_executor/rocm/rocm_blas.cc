@@ -1590,6 +1590,59 @@ bool ROCMBlas::DoBlasTrsv(Stream *stream, blas::UpperLower uplo,
 
 bool ROCMBlas::DoBlasGemm(Stream *stream, blas::Transpose transa,
                           blas::Transpose transb, uint64 m, uint64 n, uint64 k,
+                          float alpha, const DeviceMemory<Eigen::bfloat16> &a,
+                          int lda, const DeviceMemory<Eigen::bfloat16> &b, int ldb,
+                          float beta, DeviceMemory<Eigen::bfloat16> *c, int ldc) {
+  blas_log("DoBlasGemm");
+  VLOG(1) << absl::StreamFormat(
+      "doing rocBLAS SGEMM<bf16>: at=%d bt=%d m=%u n=%u "
+      "k=%llu alpha=%f a=%p lda=%d b=%p ldb=%d beta=%f "
+      "c=%p ldc=%d",
+      static_cast<int>(transa), static_cast<int>(transb), m, n, k, alpha,
+      a.opaque(), lda, b.opaque(), ldb, beta, c->opaque(), ldc);
+  if (transa == blas::Transpose::kNoTranspose) {
+    if (lda < static_cast<int64>(m)) {
+      LOG(WARNING) << "GEMM lda was smaller than m (no transpose case); "
+                      "precondition violation";
+    }
+  } else {
+    if (lda < static_cast<int64>(k)) {
+      LOG(WARNING) << "GEMM lda (" << lda << ") was smaller than k (" << k
+                   << ") (transpose case); precondition violation";
+    }
+  }
+  if (transb == blas::Transpose::kNoTranspose) {
+    if (ldb < static_cast<int64>(k)) {
+      LOG(WARNING) << "GEMM ldb (" << ldb << ") was smaller than k (" << k
+                   << ") (no transpose case); precondition violation";
+    }
+  } else {
+    if (ldb < static_cast<int64>(n)) {
+      LOG(WARNING) << "GEMM ldb was smaller than n (transpose case); "
+                      "precondition violation";
+    }
+  }
+  bool hasXDLOPS = false;
+  auto status = GpuDriver::GetMFMASupport(hasXDLOPS);
+  auto internal_type = hasXDLOPS 
+      ? rocblas_datatype_f32_r
+      : rocblas_datatype_bf16_r;
+  return DoBlasInternal(
+      wrap::rocblas_gemm_ex, stream, /* pointer_mode_host = */ true,
+      ROCMBlasTranspose(transa), ROCMBlasTranspose(transb), 
+      (rocblas_int)m, (rocblas_int)n, (rocblas_int)k,
+      reinterpret_cast<const void*>(&alpha),
+      reinterpret_cast<const void*>(GpuMemory(a)), rocblas_datatype_bf16_r, lda,
+      reinterpret_cast<const void*>(GpuMemory(b)), rocblas_datatype_bf16_r, ldb,
+      reinterpret_cast<const void*>(&beta),
+      reinterpret_cast<const void*>(GpuMemoryMutable(c)),
+      rocblas_datatype_bf16_r, ldc,
+      reinterpret_cast<void*>(GpuMemoryMutable(c)), rocblas_datatype_bf16_r, ldc,
+          internal_type, rocblas_gemm_algo_standard, 0, 0);
+}
+
+bool ROCMBlas::DoBlasGemm(Stream *stream, blas::Transpose transa,
+                          blas::Transpose transb, uint64 m, uint64 n, uint64 k,
                           float alpha, const DeviceMemory<Eigen::half> &a,
                           int lda, const DeviceMemory<Eigen::half> &b, int ldb,
                           float beta, DeviceMemory<Eigen::half> *c, int ldc) {
@@ -1650,7 +1703,6 @@ bool ROCMBlas::DoBlasGemm(Stream *stream, blas::Transpose transa,
         reinterpret_cast<rocblas_half *>(GpuMemoryMutable(c)), ldc);
   }
 }
-
 bool ROCMBlas::DoBlasGemm(Stream *stream, blas::Transpose transa,
                           blas::Transpose transb, uint64 m, uint64 n, uint64 k,
                           float alpha, const DeviceMemory<float> &a, int lda,

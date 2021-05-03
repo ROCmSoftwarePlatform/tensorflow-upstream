@@ -31,8 +31,8 @@ REGISTER(BinaryOp, CPU, "Mul", functor::mul, int32);
 
 #if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 #if !defined(MLIR_GENERATED_GPU_KERNELS_ENABLED)
-REGISTER4(BinaryOp, GPU, "Mul", functor::mul, Eigen::half, float, double,
-          uint8);
+REGISTER5(BinaryOp, GPU, "Mul", functor::mul, Eigen::half, float, double,
+          uint8, bfloat16);
 #else
 REGISTER(BinaryOp, GPU, "Mul", functor::mul, uint8);
 #endif
@@ -49,8 +49,8 @@ REGISTER_KERNEL_BUILDER(Name("Mul")
 #endif
 
 #if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
-REGISTER5(BinaryOp, GPU, "MulNoNan", functor::mul_no_nan, Eigen::half, float,
-          double, complex64, complex128);
+REGISTER6(BinaryOp, GPU, "MulNoNan", functor::mul_no_nan, Eigen::half, float,
+          double, complex64, complex128, bfloat16);
 #endif
 
 }  // namespace tensorflow

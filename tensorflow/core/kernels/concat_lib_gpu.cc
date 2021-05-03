@@ -99,7 +99,9 @@ void ConcatGPU(
       Tensor* output, typename TTypes<T, 2>::Tensor* output_flat);
 
 TF_CALL_INTEGRAL_TYPES(REGISTER);  // int32 Needed for TensorLists.
+#if !TENSORFLOW_USE_ROCM
 TF_CALL_bfloat16(REGISTER);
+#endif
 TF_CALL_GPU_ALL_TYPES(REGISTER);
 
 #undef REGISTER

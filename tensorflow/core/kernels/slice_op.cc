@@ -315,7 +315,9 @@ TF_CALL_GPU_ALL_TYPES(DECLARE_FOR_N);
                               .HostMemory("size"),       \
                           SliceOp<GPUDevice, type>)
 
+#if !TENSORFLOW_USE_ROCM
 TF_CALL_bfloat16(REGISTER_GPU);
+#endif
 TF_CALL_int8(REGISTER_GPU);
 TF_CALL_int64(REGISTER_GPU);
 TF_CALL_GPU_ALL_TYPES(REGISTER_GPU);

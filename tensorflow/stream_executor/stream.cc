@@ -882,6 +882,28 @@ Stream &Stream::ThenPoolForward(
 Stream &Stream::ThenPoolForward(
     const dnn::PoolingDescriptor &pooling_dimensions,
     const dnn::BatchDescriptor &input_dimensions,
+    const DeviceMemory<Eigen::bfloat16> &input_data,
+    const dnn::BatchDescriptor &output_dimensions,
+    DeviceMemory<Eigen::bfloat16> *output_data,
+    ScratchAllocator *workspace_allocator) {
+  VLOG_CALL(PARAM(pooling_dimensions), PARAM(input_dimensions),
+            PARAM(input_data), PARAM(output_dimensions), PARAM(output_data),
+            PARAM(workspace_allocator));
+
+  if (dnn::DnnSupport *dnn = parent_->AsDnn()) {
+    CheckError(dnn->DoPoolForward(this, pooling_dimensions, input_dimensions,
+                                  input_data, output_dimensions, output_data,
+                                  workspace_allocator));
+  } else {
+    SetErrorAndLogNoDnnSupport();
+  }
+  return *this;
+}
+
+
+Stream &Stream::ThenPoolForward(
+    const dnn::PoolingDescriptor &pooling_dimensions,
+    const dnn::BatchDescriptor &input_dimensions,
     const DeviceMemory<int8> &input_data,
     const dnn::BatchDescriptor &output_dimensions,
     DeviceMemory<int8> *output_data, ScratchAllocator *workspace_allocator) {
@@ -975,6 +997,32 @@ Stream &Stream::ThenPoolBackward(
   }
   return *this;
 }
+
+Stream &Stream::ThenPoolBackward(
+    const dnn::PoolingDescriptor &pooling_dimensions,
+    const dnn::BatchDescriptor &input_dimensions,
+    const DeviceMemory<Eigen::bfloat16> &input_data,
+    const dnn::BatchDescriptor &output_dimensions,
+    const DeviceMemory<Eigen::bfloat16> &output_data,
+    const DeviceMemory<Eigen::bfloat16> &input_diff_data,
+    DeviceMemory<Eigen::bfloat16> *output_diff_data,
+    ScratchAllocator *workspace_allocator) {
+  VLOG_CALL(PARAM(pooling_dimensions), PARAM(input_dimensions),
+            PARAM(input_data), PARAM(output_dimensions), PARAM(output_data),
+            PARAM(input_diff_data), PARAM(output_diff_data),
+            PARAM(workspace_allocator));
+
+  if (dnn::DnnSupport *dnn = parent_->AsDnn()) {
+    CheckError(dnn->DoPoolBackward(this, pooling_dimensions, input_dimensions,
+                                   input_data, output_dimensions, output_data,
+                                   input_diff_data, output_diff_data,
+                                   workspace_allocator));
+  } else {
+    SetErrorAndLogNoDnnSupport();
+  }
+  return *this;
+}
+
 
 Stream &Stream::ThenNormalizeWithDimensions(
     const dnn::NormalizeDescriptor &normalize_descriptor,
@@ -3133,6 +3181,25 @@ Stream &Stream::ThenBlasTrsv(blas::UpperLower uplo, blas::Transpose trans,
       impl;
   return impl(this, &blas::BlasSupport::DoBlasTrsv, uplo, trans, diag, n, a,
               lda, x, incx);
+}
+
+Stream &Stream::ThenBlasGemm(blas::Transpose transa, blas::Transpose transb,
+                             uint64 m, uint64 n, uint64 k, float alpha,
+                             const DeviceMemory<Eigen::bfloat16> &a, int lda,
+                             const DeviceMemory<Eigen::bfloat16> &b, int ldb,
+                             float beta, DeviceMemory<Eigen::bfloat16> *c,
+                             int ldc) {
+  VLOG_CALL(PARAM(transa), PARAM(transb), PARAM(m), PARAM(n), PARAM(k),
+            PARAM(alpha), PARAM(a), PARAM(lda), PARAM(b), PARAM(ldb),
+            PARAM(beta), PARAM(c), PARAM(ldc));
+
+  ThenBlasImpl<blas::Transpose, blas::Transpose, uint64, uint64, uint64, float,
+               const DeviceMemory<Eigen::bfloat16> &, int,
+               const DeviceMemory<Eigen::bfloat16> &, int, float,
+               DeviceMemory<Eigen::bfloat16> *, int>
+      impl;
+  return impl(this, &blas::BlasSupport::DoBlasGemm, transa, transb, m, n, k,
+              alpha, a, lda, b, ldb, beta, c, ldc);
 }
 
 Stream &Stream::ThenBlasGemm(blas::Transpose transa, blas::Transpose transb,

@@ -172,7 +172,7 @@ class Conv2DTest(test.TestCase):
     else:
       # It is important that float32 comes before float16 here,
       # as we will be using its gradients as reference for fp16 gradients.
-      return [dtypes.float32, dtypes.float16] + optional_float64
+      return [dtypes.float32, dtypes.float16, dtypes.bfloat16] + optional_float64
 
   def _CreateNumpyTensor(self, shape):
     total_size = 1

@@ -363,9 +363,64 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
   }
   static int64 ConvolveBackwardDataScratchSize =
       GetDnnWorkspaceLimit("TF_CUDNN_WORKSPACE_LIMIT_IN_MB", workspace_bytes);
+
+  Tensor bfloat16_out_backprop, bfloat16_filter, bfloat16_in_backprop;
+  se::DeviceMemory<bfloat16> bfloat16_out_backprop_ptr, bfloat16_filter_ptr,
+      bfloat16_in_backprop_ptr;
+
+  bool bf16 = TestMIOpenBFloat16Support<T>() && !std::is_same<T, Eigen::bfloat16>::value;
+  if (bf16) {
+    TensorShape out_backprop_shape = ShapeFromFormat(
+        FORMAT_NCHW, dims.batch_size, dims.spatial_dims[0].output_size,
+        dims.spatial_dims[1].output_size, dims.out_depth);
+    VLOG(3) << "Allocate temporary memory for bfloat16 out_backprop";
+    OP_REQUIRES_OK(ctx, ctx->allocate_temp(DT_BFLOAT16, out_backprop_shape,
+                                           &bfloat16_out_backprop));
+    functor::ConvertToBFloat16<GPUDevice, T, 4>()(
+        ctx->eigen_device<GPUDevice>(),
+        const_cast<const Tensor&>(transformed_out_backprop).tensor<T, 4>(),
+        bfloat16_out_backprop.tensor<bfloat16, 4>());
+
+    TensorShape filter_shape =
+        TensorShape({filter.dim_size(3), filter.dim_size(2), filter.dim_size(0),
+                     filter.dim_size(1)});
+    VLOG(3) << "Allocate temporary memory for bfloat16 filter";
+    OP_REQUIRES_OK(
+        ctx, ctx->allocate_temp(DT_BFLOAT16, filter_shape, &bfloat16_filter));
+    functor::ConvertToBFloat16<GPUDevice, T, 4>()(
+        ctx->eigen_device<GPUDevice>(),
+        const_cast<const Tensor&>(transformed_filter).tensor<T, 4>(),
+        bfloat16_filter.tensor<bfloat16, 4>());
+
+    TensorShape in_backprop_shape =
+        ShapeFromFormat(compute_data_format,
+                        GetTensorDim(compatible_input_shape, data_format, 'N'),
+                        GetTensorDim(compatible_input_shape, data_format, 'H'),
+                        GetTensorDim(compatible_input_shape, data_format, 'W'),
+                        GetTensorDim(compatible_input_shape, data_format, 'C'));
+    VLOG(3) << "Allocate temporary memory for bfloat16 in backprop";
+    OP_REQUIRES_OK(ctx, ctx->allocate_temp(DT_BFLOAT16, in_backprop_shape,
+                                           &bfloat16_in_backprop));
+
+    bfloat16_out_backprop_ptr =
+        AsDeviceMemory(bfloat16_out_backprop.template flat<bfloat16>().data(),
+                       bfloat16_out_backprop.template flat<bfloat16>().size());
+    bfloat16_filter_ptr =
+        AsDeviceMemory(bfloat16_filter.template flat<bfloat16>().data(),
+                       bfloat16_filter.template flat<bfloat16>().size());
+    bfloat16_in_backprop_ptr =
+        AsDeviceMemory(bfloat16_in_backprop.template flat<bfloat16>().data(),
+                       bfloat16_in_backprop.template flat<bfloat16>().size());
+  }
+
   DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize, ctx);
   int device_id = stream->parent()->device_ordinal();
   DataType dtype = out_backprop.dtype();
+#if TENSORFLOW_USE_ROCM
+  if (bf16) {
+    dtype = DT_BFLOAT16;
+  }
+#endif
   ConvParameters conv_parameters = {
       dims.batch_size,                     // batch
       dims.in_depth,                       // in_depths
@@ -505,17 +560,32 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
 #elif TENSORFLOW_USE_ROCM
     DnnScratchAllocator scratch_allocator(ConvolveBackwardDataScratchSize, ctx);
     std::vector<ProfileResult> algorithms;
-    OP_REQUIRES(
-        ctx,
-        stream->parent()->GetMIOpenConvolveAlgorithms(
-            se::dnn::ConvolutionKind::BACKWARD_DATA,
-            se::dnn::ToDataType<T>::value, stream, input_desc, in_backprop_ptr,
-            filter_desc, filter_ptr, output_desc, out_backprop_ptr, conv_desc,
-            &scratch_allocator, &algorithms),
-        errors::Unknown(
-            "Failed to get convolution algorithm. This is probably "
-            "because MIOpen failed to initialize, so try looking to "
-            "see if a warning log message was printed above."));
+    if (bf16) {
+      OP_REQUIRES(
+          ctx,
+          stream->parent()->GetMIOpenConvolveAlgorithms(
+              se::dnn::ConvolutionKind::BACKWARD_DATA,
+              se::dnn::ToDataType<bfloat16>::value, stream, input_desc,
+              bfloat16_in_backprop_ptr, filter_desc, bfloat16_filter_ptr,
+              output_desc, bfloat16_out_backprop_ptr, conv_desc,
+              &scratch_allocator, &algorithms),
+          errors::Unknown(
+              "Failed to get convolution algorithm. This is probably "
+              "because MIOpen failed to initialize, so try looking to "
+              "see if a warning log message was printed above."));
+    } else {
+      OP_REQUIRES(
+          ctx,
+          stream->parent()->GetMIOpenConvolveAlgorithms(
+              se::dnn::ConvolutionKind::BACKWARD_DATA,
+              se::dnn::ToDataType<T>::value, stream, input_desc,
+              in_backprop_ptr, filter_desc, filter_ptr, output_desc,
+              out_backprop_ptr, conv_desc, &scratch_allocator, &algorithms),
+          errors::Unknown(
+              "Failed to get convolution algorithm. This is probably "
+              "because MIOpen failed to initialize, so try looking to "
+              "see if a warning log message was printed above."));
+    }
 
     std::vector<tensorflow::AutotuneResult> results;
     if (algorithms.size() == 1) {
@@ -534,11 +604,23 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
       for (auto miopen_algorithm : algorithms) {
         auto profile_algorithm = miopen_algorithm.algorithm();
         ProfileResult profile_result;
-        auto miopen_launch_status = stream->ConvolveBackwardDataWithAlgorithm(
-            filter_desc, filter_ptr, output_desc, out_backprop_ptr, conv_desc,
-            input_desc, &in_backprop_ptr, &scratch_allocator,
-            AlgorithmConfig(profile_algorithm, miopen_algorithm.scratch_size()),
-            &profile_result);
+        Status miopen_launch_status;
+        if (bf16) {
+          miopen_launch_status = stream->ConvolveBackwardDataWithAlgorithm(
+              filter_desc, bfloat16_filter_ptr, output_desc,
+              bfloat16_out_backprop_ptr, conv_desc, input_desc,
+              &bfloat16_in_backprop_ptr, &scratch_allocator,
+              AlgorithmConfig(profile_algorithm,
+                              miopen_algorithm.scratch_size()),
+              &profile_result);
+        } else {
+          miopen_launch_status = stream->ConvolveBackwardDataWithAlgorithm(
+              filter_desc, filter_ptr, output_desc, out_backprop_ptr, conv_desc,
+              input_desc, &in_backprop_ptr, &scratch_allocator,
+              AlgorithmConfig(profile_algorithm,
+                              miopen_algorithm.scratch_size()),
+              &profile_result);
+        }
 
         if (miopen_launch_status.ok() && profile_result.is_valid()) {
           results.emplace_back();
@@ -577,12 +659,26 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
     } else {
       VLOG(4) << "Convolution AutoTune has been turned off";
     }
-    cudnn_launch_status = stream->ConvolveBackwardDataWithExecutionPlan(
+    if (bf16)
+      cudnn_launch_status = stream->ConvolveBackwardDataWithExecutionPlan(
+        filter_desc, bfloat16_filter_ptr, output_desc,
+        bfloat16_out_backprop_ptr, conv_desc, input_desc,
+        &bfloat16_in_backprop_ptr, &scratch_allocator, algorithm_config,
+        nullptr);
+    else
+      cudnn_launch_status = stream->ConvolveBackwardDataWithExecutionPlan(
         filter_desc, filter_ptr, output_desc, out_backprop_ptr, conv_desc,
         input_desc, &in_backprop_ptr, &scratch_allocator, algorithm_config,
         nullptr);
   } else {
-    cudnn_launch_status = stream->ConvolveBackwardDataWithAlgorithm(
+    if (bf16)
+      cudnn_launch_status = stream->ConvolveBackwardDataWithAlgorithm(
+        filter_desc, bfloat16_filter_ptr, output_desc,
+        bfloat16_out_backprop_ptr, conv_desc, input_desc,
+        &bfloat16_in_backprop_ptr, &scratch_allocator, algorithm_config,
+        nullptr);
+    else
+      cudnn_launch_status = stream->ConvolveBackwardDataWithAlgorithm(
         filter_desc, filter_ptr, output_desc, out_backprop_ptr, conv_desc,
         input_desc, &in_backprop_ptr, &scratch_allocator, algorithm_config,
         nullptr);
@@ -591,6 +687,14 @@ void LaunchConv2DBackpropInputOp<GPUDevice, T>::operator()(
   if (!cudnn_launch_status.ok()) {
     ctx->SetStatus(cudnn_launch_status);
     return;
+  }
+
+  if (bf16) {
+    VLOG(3) << "Convert the in_backprop tensor back from bfloat16 to float.";
+    functor::ConvertFromBFloat16<GPUDevice, T, 4>()(
+        ctx->eigen_device<GPUDevice>(),
+        const_cast<const Tensor&>(bfloat16_in_backprop).tensor<bfloat16, 4>(),
+        pre_transformed_in_backprop.tensor<T, 4>());
   }
 
   if (padding_top != padding_bottom || padding_left != padding_right) {
@@ -655,6 +759,7 @@ namespace functor {
 
 DECLARE_GPU_SPEC(float);
 DECLARE_GPU_SPEC(Eigen::half);
+DECLARE_GPU_SPEC(Eigen::bfloat16);
 DECLARE_GPU_SPEC(double);
 #undef DECLARE_GPU_SPEC
 
@@ -698,6 +803,11 @@ REGISTER_KERNEL_BUILDER(Name("Conv2DBackpropInput")
                         Conv2DBackpropInputOp<GPUDevice, Eigen::half>);
 REGISTER_KERNEL_BUILDER(Name("Conv2DBackpropInput")
                             .Device(DEVICE_GPU)
+                            .TypeConstraint<Eigen::bfloat16>("T")
+                            .HostMemory("input_sizes"),
+                        Conv2DBackpropInputOp<GPUDevice, Eigen::bfloat16>);
+REGISTER_KERNEL_BUILDER(Name("Conv2DBackpropInput")
+                            .Device(DEVICE_GPU)
                             .TypeConstraint<int32>("T")
                             .HostMemory("input_sizes"),
                         Conv2DBackpropInputOp<GPUDevice, int32>);
@@ -706,6 +816,7 @@ REGISTER_KERNEL_BUILDER(Name("Conv2DBackpropInput")
 // TODO(reedwm): Move this and the definition to depthwise_conv_grad_op.cc.
 template struct LaunchConv2DBackpropInputOp<GPUDevice, float>;
 template struct LaunchConv2DBackpropInputOp<GPUDevice, Eigen::half>;
+template struct LaunchConv2DBackpropInputOp<GPUDevice, Eigen::bfloat16>;
 template struct LaunchConv2DBackpropInputOp<GPUDevice, double>;
 
 #endif  // GOOGLE_CUDA || TENSORFLOW_USE_ROCM

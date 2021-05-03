@@ -191,15 +191,27 @@ limitations under the License.
 // Call "m" on POD and string types.
 #define TF_CALL_POD_STRING_TYPES(m) TF_CALL_POD_TYPES(m) TF_CALL_tstring(m)
 
+#if TENSORFLOW_USE_ROCM
 // Call "m" on all number types supported on GPU.
 #define TF_CALL_GPU_NUMBER_TYPES(m) \
+  TF_CALL_half(m) TF_CALL_float(m) TF_CALL_double(m) TF_CALL_bfloat16(m)
+#define TF_CALL_GPU_NUMBER_TYPES_NO_BF16(m) \
+   TF_CALL_half(m) TF_CALL_float(m) TF_CALL_double(m)
+#else
+#define TF_CALL_GPU_NUMBER_TYPES(m) \
   TF_CALL_half(m) TF_CALL_float(m) TF_CALL_double(m)
+#define TF_CALL_GPU_NUMBER_TYPES_NO_BF16(m) \
+  TF_CALL_half(m) TF_CALL_float(m) TF_CALL_double(m)
+#endif
 
 // Call "m" on all types supported on GPU.
 #define TF_CALL_GPU_ALL_TYPES(m) \
   TF_CALL_GPU_NUMBER_TYPES(m) TF_CALL_COMPLEX_TYPES(m) TF_CALL_bool(m)
 
 #define TF_CALL_GPU_NUMBER_TYPES_NO_HALF(m) TF_CALL_float(m) TF_CALL_double(m)
+
+#define TF_CALL_GPU_ALL_TYPES_NO_BF16(m) \
+  TF_CALL_GPU_NUMBER_TYPES_NO_BF16(m) TF_CALL_COMPLEX_TYPES(m) TF_CALL_bool(m)
 
 // Call "m" on all quantized types.
 // TODO(cwhipkey): include TF_CALL_qint16(m) TF_CALL_quint16(m)

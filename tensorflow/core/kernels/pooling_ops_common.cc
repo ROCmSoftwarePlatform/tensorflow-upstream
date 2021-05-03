@@ -433,6 +433,7 @@ namespace functor {
 
 DECLARE_GPU_SPEC(float);
 DECLARE_GPU_SPEC(Eigen::half);
+DECLARE_GPU_SPEC(Eigen::bfloat16);
 DECLARE_GPU_SPEC(double);
 DECLARE_GPU_SPEC(int32);
 }  // namespace functor

@@ -30,8 +30,8 @@ REGISTER(BinaryOp, CPU, "AddV2", functor::add, bfloat16);
 #if GOOGLE_CUDA || TENSORFLOW_USE_ROCM
 
 #if !defined(MLIR_GENERATED_GPU_KERNELS_ENABLED)
-REGISTER3(BinaryOp, GPU, "Add", functor::add, float, Eigen::half, double);
-REGISTER3(BinaryOp, GPU, "AddV2", functor::add, float, Eigen::half, double);
+REGISTER4(BinaryOp, GPU, "Add", functor::add, float, Eigen::half, double, bfloat16);
+REGISTER4(BinaryOp, GPU, "AddV2", functor::add, float, Eigen::half, double, bfloat16);
 #endif
 
 // A special GPU kernel for int32.

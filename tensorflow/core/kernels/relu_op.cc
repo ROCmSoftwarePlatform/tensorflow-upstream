@@ -208,7 +208,7 @@ TF_CALL_GPU_NUMBER_TYPES(DECLARE_GPU_SPEC);
       Name("SeluGrad").Device(DEVICE_GPU).TypeConstraint<type>("T"),      \
       SeluGradOp<GPUDevice, type>)
 
-TF_CALL_GPU_NUMBER_TYPES(REGISTER_GPU_KERNELS);
+TF_CALL_GPU_NUMBER_TYPES_NO_BF16(REGISTER_GPU_KERNELS);
 #undef REGISTER_GPU_KERNELS
 
 template <typename Device>
