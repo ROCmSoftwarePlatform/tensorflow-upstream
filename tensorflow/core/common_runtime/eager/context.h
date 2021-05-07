@@ -354,6 +354,8 @@ class EagerContext : public ImmediateExecutionContext, public core::RefCounted {
   uint64 GetContextViewId() const;
   void IncrementContextViewId();
 
+  Status EnableCollectiveOps(const ServerDef& server_def) override;
+
   // TODO(nareshmodi): Encapsulate remote state into a separate
   // class/struct.
   //

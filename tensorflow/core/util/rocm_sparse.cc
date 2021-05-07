@@ -181,6 +181,11 @@ Status GpuSparse::Initialize() {
   return Status::OK();
 }
 
+#define TF_CALL_HIPSPARSE_DTYPES(m)                       \
+	m(float, ROCM_R_32F) m(double, ROCM_R_64F)        \
+	m(std::complex<float>, ROCM_C_32F)                \
+	m(std::complex<double>, ROCM_C_64F) 
+
 // Macro that specializes a sparse method for all 4 standard
 // numeric types.
 #define TF_CALL_HIP_LAPACK_TYPES(m) \
@@ -188,6 +193,8 @@ Status GpuSparse::Initialize() {
 
 // Macros to construct hipsparse method names.
 #define SPARSE_FN(method, sparse_prefix) wrap::hipsparse##sparse_prefix##method
+#define BUFSIZE_FN(method, sparse_prefix) \
+  wrap::hipsparse##sparse_prefix##method##_bufferSizeExt
 
 Status GpuSparse::Coo2csr(const int* cooRowInd, int nnz, int m,
                           int* csrRowPtr) const {
@@ -206,6 +213,8 @@ Status GpuSparse::Csr2coo(const int* csrRowPtr, int nnz, int m,
                               HIPSPARSE_INDEX_BASE_ZERO));
   return Status::OK();
 }
+
+#if TF_ROCM_VERSION < 40200
 
 template <typename Scalar, typename SparseFnT>
 static inline Status CsrmmImpl(
@@ -239,6 +248,43 @@ static inline Status CsrmmImpl(
   }
 
 TF_CALL_HIP_LAPACK_TYPES(CSRMM_INSTANCE);
+
+#else
+
+#define SPMM_BUFFERSIZE_INSTANCE(Scalar, dtype)                               \
+  template <>                                                                 \
+  Status GpuSparse::SpMMBufferSize<Scalar>(                                   \
+      hipsparseOperation_t transA, hipsparseOperation_t transB,               \
+      const Scalar* alpha, const hipsparseSpMatDescr_t matA,                  \
+      const gpusparseDnMatDescr_t matB, const Scalar* beta,                   \
+      gpusparseDnMatDescr_t matC, hipsparseSpMMAlg_t alg, size_t* bufferSize) \
+      const {                                                                 \
+    DCHECK(initialized_);                                                     \
+    TF_RETURN_IF_GPUSPARSE_ERROR(wrap::hipsparseSpMM_bufferSize(              \
+        *gpusparse_handle_, transA, transB, alpha, matA, matB, beta, matC,    \
+        dtype, alg, bufferSize));                                             \
+    return Status::OK();                                                      \
+  }
+
+TF_CALL_HIPSPARSE_DTYPES(SPMM_BUFFERSIZE_INSTANCE);
+
+#define SPMM_INSTANCE(Scalar, dtype)                                             \
+  template <>                                                                    \
+  Status GpuSparse::SpMM<Scalar>(                                                \
+      hipsparseOperation_t transA, hipsparseOperation_t transB,                  \
+      const Scalar* alpha, const hipsparseSpMatDescr_t matA,                     \
+      const gpusparseDnMatDescr_t matB, const Scalar* beta,                      \
+      gpusparseDnMatDescr_t matC, hipsparseSpMMAlg_t alg, int8* buffer) const {  \
+    DCHECK(initialized_);                                                        \
+    TF_RETURN_IF_GPUSPARSE_ERROR(wrap::hipsparseSpMM(*gpusparse_handle_, transA, \
+                                              transB, alpha, matA, matB, beta,   \
+                                              matC, dtype, alg, buffer));        \
+    return Status::OK();                                                         \
+  }
+
+TF_CALL_HIPSPARSE_DTYPES(SPMM_INSTANCE);
+
+#endif
 
 template <typename Scalar, typename SparseFnT>
 static inline Status CsrmvImpl(SparseFnT op, OpKernelContext* context,
@@ -328,6 +374,55 @@ static inline Status CsrgemmImpl(
   }
 
 TF_CALL_HIP_LAPACK_TYPES(CSRGEMM_INSTANCE);
+
+#if TF_ROCM_VERSION >= 40200
+
+template <typename Scalar, typename BufferSizeFnT, typename SparseFnT>
+static inline Status Csru2csrImpl(SparseFnT op, BufferSizeFnT buffer_size_op,
+                                  OpKernelContext* context,
+                                  hipsparseHandle_t hipsparse_handle, int m,
+                                  int n, int nnz,
+                                  const hipsparseMatDescr_t descrA,
+                                  Scalar* csrVal, const int* csrRowPtr,
+                                  int* csrColInd) {
+  GpuSparseCsrSortingConversionInfo info;
+  TF_RETURN_IF_ERROR(info.Initialize());
+
+  size_t pBufferSizeInBytes = 0;
+
+  TF_RETURN_IF_GPUSPARSE_ERROR(
+      buffer_size_op(hipsparse_handle, m, n, nnz, AsHipComplex(csrVal),
+                     csrRowPtr, csrColInd, info.info(), &pBufferSizeInBytes));
+
+  Tensor pBuffer_t;
+  TF_RETURN_IF_ERROR(context->allocate_temp(
+      DT_INT8, TensorShape({static_cast<int64>(pBufferSizeInBytes)}),
+      &pBuffer_t));
+  auto pBuffer = pBuffer_t.flat<int8>();
+  DCHECK(pBuffer.data() != nullptr);
+
+  TF_RETURN_IF_GPUSPARSE_ERROR(op(hipsparse_handle, m, n, nnz, descrA,
+                                  AsHipComplex(csrVal), csrRowPtr, csrColInd,
+                                  info.info(), pBuffer.data()));
+
+  return Status::OK();
+}
+
+#define CSRU2CSR_INSTANCE(Scalar, sparse_prefix)                              \
+  template <>                                                                 \
+  Status GpuSparse::Csru2csr<Scalar>(                                         \
+      int m, int n, int nnz, const hipsparseMatDescr_t descrA, Scalar* csrVal, \
+      const int* csrRowPtr, int* csrColInd) {                                 \
+    DCHECK(initialized_);                                                     \
+    return Csru2csrImpl(SPARSE_FN(csru2csr, sparse_prefix),                   \
+                        BUFSIZE_FN(csru2csr, sparse_prefix), context_,        \
+                        *gpusparse_handle_, m, n, nnz, descrA, csrVal,        \
+                        csrRowPtr, csrColInd);                                \
+  }
+
+TF_CALL_LAPACK_TYPES(CSRU2CSR_INSTANCE);
+
+#endif
 
 template <typename Scalar, typename SparseFnT>
 static inline Status Csr2cscImpl(SparseFnT op, OpKernelContext* context,
