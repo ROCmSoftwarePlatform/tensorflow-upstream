@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "tensorflow/core/common_runtime/device.h"
@@ -58,17 +60,12 @@ GENERATE_DEFAULT_TEST_WITH_SPECIFIC_INPUT_VALUES(
 
 // Test only values in the function domain. The otherwise returned nan value
 // fails comparison for equality.
-#if defined(TENSORFLOW_USE_ROCM)
-auto acos_test_config = test::OpsTestConfig();
-#else
-auto acos_test_config = test::OpsTestConfig().ExpectStrictlyEqual();
-#endif
 GENERATE_DEFAULT_TEST_WITH_SPECIFIC_INPUT_VALUES(
     Acos, DT_FLOAT, DT_FLOAT, test::DefaultInputBetweenZeroAndOne<float>(),
-    std::acos, acos_test_config)
+    std::acos, test::OpsTestConfig())
 GENERATE_DEFAULT_TEST_WITH_SPECIFIC_INPUT_VALUES(
     Acos, DT_DOUBLE, DT_DOUBLE, test::DefaultInputBetweenZeroAndOne<double>(),
-    std::acos, acos_test_config)
+    std::acos, test::OpsTestConfig())
 
 /// Test `tf.Acosh`.
 
@@ -673,6 +670,22 @@ GENERATE_DEFAULT_TEST(Reciprocal, DT_DOUBLE, DT_DOUBLE, baseline_reciprocal,
 
 GENERATE_DEFAULT_TEST_2(Reciprocal, DT_HALF, DT_FLOAT, DT_HALF, DT_FLOAT,
                         baseline_reciprocal, test::OpsTestConfig())
+
+/// Test `tf.Relu`.
+
+template <typename T>
+T baseline_relu(T x) {
+  return std::max(x, static_cast<T>(0.0));
+}
+
+GENERATE_DEFAULT_TEST(Relu, DT_FLOAT, DT_FLOAT, baseline_relu,
+                      test::OpsTestConfig())
+
+GENERATE_DEFAULT_TEST(Relu, DT_DOUBLE, DT_DOUBLE, baseline_relu,
+                      test::OpsTestConfig())
+
+GENERATE_DEFAULT_TEST_2(Relu, DT_HALF, DT_FLOAT, DT_HALF, DT_FLOAT,
+                        baseline_relu, test::OpsTestConfig())
 
 /// Test `tf.Rsqrt`.
 
