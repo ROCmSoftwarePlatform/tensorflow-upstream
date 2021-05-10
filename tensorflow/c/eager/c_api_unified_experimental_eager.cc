@@ -45,7 +45,7 @@ using tensorflow::strings::StrCat;
 
 TF_ExecutionContext* TF_NewEagerExecutionContext(TFE_ContextOptions* options,
                                                  TF_Status* s) {
-  TFE_Context* c_ctx = TFE_NewContext(options, s);
+  TFE_Context* c_ctx = TFE_NewContext(options, s, true);
   if (TF_GetCode(s) != TF_OK) {
     return nullptr;
   }

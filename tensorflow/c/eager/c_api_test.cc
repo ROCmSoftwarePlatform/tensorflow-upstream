@@ -52,7 +52,7 @@ namespace {
 void BM_InitOp(::testing::benchmark::State& state) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -74,7 +74,7 @@ void BM_Execute(::testing::benchmark::State& state) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -114,7 +114,7 @@ void BM_Execute_Identity(::testing::benchmark::State& state) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -147,7 +147,7 @@ BENCHMARK(BM_Execute_Identity)->Arg(0)->Arg(1);
 TEST(CAPI, Context) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   TFE_DeleteContextOptions(opts);
 
   TF_DeviceList* devices = TFE_ContextListDevices(ctx, status);
@@ -170,7 +170,7 @@ TEST(CAPI, TensorHandle) {
   std::unique_ptr<TF_Status, decltype(&TF_DeleteStatus)> status(
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   CHECK_EQ(TF_OK, TF_GetCode(status.get())) << TF_Message(status.get());
   TFE_DeleteContextOptions(opts);
 
@@ -195,7 +195,7 @@ void TensorHandleCopyBetweenDevices(bool async) {
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   TFE_DeleteContextOptions(opts);
   ASSERT_EQ(TF_OK, TF_GetCode(status.get())) << TF_Message(status.get());
 
@@ -272,7 +272,7 @@ void TensorHandleCopyBetweenDevicesError(bool async) {
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   TFE_DeleteContextOptions(opts);
   ASSERT_EQ(TF_OK, TF_GetCode(status.get())) << TF_Message(status.get());
   TFE_TensorHandle* hcpu = TestMatrixTensorHandle(ctx);
@@ -312,7 +312,7 @@ void TensorHandleCopyBetweenTwoGPUDevices(bool async) {
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   TFE_DeleteContextOptions(opts);
   ASSERT_EQ(TF_OK, TF_GetCode(status.get())) << TF_Message(status.get());
 
@@ -395,7 +395,7 @@ void TensorHandleSilentCopy(bool async,
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
   TFE_ContextOptionsSetDevicePlacementPolicy(opts, global_policy);
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   if (thread_policy != global_policy) {
     TFE_ContextSetThreadLocalDevicePlacementPolicy(ctx, thread_policy);
   }
@@ -471,7 +471,7 @@ TEST(CAPI, TensorHandleSilentCopyLocalPolicyAsync) {
 void SetAndGetOpDevices(bool async) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -542,7 +542,7 @@ TEST(CAPI, TensorHandleDevices) {
   std::unique_ptr<TF_Status, decltype(&TF_DeleteStatus)> status(
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   TFE_DeleteContextOptions(opts);
   ASSERT_EQ(TF_OK, TF_GetCode(status.get())) << TF_Message(status.get());
 
@@ -601,7 +601,7 @@ void ExecuteAdd(bool async, bool forward_input, bool tfrt) {
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetTfrt(opts, tfrt);
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -713,7 +713,7 @@ void Execute_MatMul_CPU(bool async) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -749,7 +749,7 @@ void Execute_MatMul_CPU_Runtime_Error(bool async) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -821,7 +821,7 @@ void Execute_MatMul_CPU_Type_Error(bool async) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -851,7 +851,7 @@ TEST(CAPI, Execute_MatMul_CPU_Type_ErrorAsync) {
 TEST(CAPI, Execute_Min_CPU) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -885,7 +885,7 @@ void ExecuteWithTracing(bool async) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   TFE_ContextEnableRunMetadata(ctx);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
@@ -998,7 +998,7 @@ void FunctionDefAndExecute(bool async) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1048,7 +1048,7 @@ void RunAddFunction(bool use_tfrt, bool enable_grappler) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1151,7 +1151,7 @@ void BM_ExecuteFunction(::testing::benchmark::State& state) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1193,7 +1193,7 @@ TEST(CAPI, Variables) {
   // tensor handling.
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1233,7 +1233,7 @@ TEST(CAPI, Variables) {
 void BM_ReadVariable(::testing::benchmark::State& state) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1272,7 +1272,7 @@ TEST(CAPI, DISABLED_StringAttributes) {
   // returns.
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1331,7 +1331,7 @@ TEST(CAPI, TestTFE_SetOpAttrs) {
   // returns.
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1391,7 +1391,7 @@ TEST(CAPI, TestTFE_TensorHandleCopySharingUnderlyingTensorHandle) {
   std::unique_ptr<TF_Status, decltype(&TF_DeleteStatus)> status(
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status.get());
+  TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
   CHECK_EQ(TF_OK, TF_GetCode(status.get())) << TF_Message(status.get());
   TFE_DeleteContextOptions(opts);
 
@@ -1428,7 +1428,7 @@ tensorflow::AttrValueMap ExtractAttrs(TFE_Op* op) {
 TEST(CAPI, TestTFE_OpInferSingleInputAttrs) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1465,7 +1465,7 @@ TEST(CAPI, TestTFE_OpInferSingleInputAttrs) {
 TEST(CAPI, TestTFE_OpInferSingleTypeInputListAttrs) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1505,7 +1505,7 @@ TEST(CAPI, TestTFE_OpInferSingleTypeInputListAttrs) {
 TEST(CAPI, TestTFE_OpInferMixedTypeInputListAttrs) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1544,7 +1544,7 @@ TEST(CAPI, TestTFE_OpInferMixedTypeInputListAttrs) {
 TEST(CAPI, TestTFE_OpAttrsInferenceDisabledWhenNotCallingOpAddInputList) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1579,7 +1579,7 @@ TEST(CAPI, TestTFE_OpAttrsInferenceDisabledWhenNotCallingOpAddInputList) {
 TEST(CAPI, TestTFE_OpGetInputAndOutputLengths) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1627,7 +1627,7 @@ TEST(CAPI, TestTFE_OpGetInputAndOutputLengths) {
 TEST(CAPI, TestTFE_OpGetInputAndOutputLengthsFailForUnknownArguments) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1654,7 +1654,7 @@ TEST(CAPI, TestTFE_OpGetInputAndOutputLengthsFailForUnknownArguments) {
 TEST(CAPI, TestTFE_OpAddAttrs) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1689,7 +1689,7 @@ TEST(CAPI, TestTFE_OpAddAttrs) {
 TEST(CAPI, TestTFE_OpAttrsSerialize) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -1763,7 +1763,7 @@ TFE_Op* CloneOp(const TFE_Op* other) {
 TEST(CAPI, TestTFE_OpRecreation) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 

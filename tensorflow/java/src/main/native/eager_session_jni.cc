@@ -41,7 +41,7 @@ JNIEXPORT jlong JNICALL Java_org_tensorflow_EagerSession_allocate(
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
   TFE_ContextOptionsSetDevicePlacementPolicy(
       opts, static_cast<TFE_ContextDevicePlacementPolicy>(dpp));
-  TFE_Context* context = TFE_NewContext(opts, status);
+  TFE_Context* context = TFE_NewContext(opts, status, true);
   TFE_DeleteContextOptions(opts);
   if (config != nullptr) {
     env->ReleaseByteArrayElements(config, cconfig, JNI_ABORT);

@@ -45,7 +45,7 @@ TEST(PARALLEL_DEVICE_LIB, TestOpWithError) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
 
   std::vector<std::string> devices{
@@ -101,7 +101,7 @@ TEST(PARALLEL_DEVICE_LIB, TestExplicitOutputShape) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
 
   std::vector<std::string> devices{
@@ -143,7 +143,7 @@ TEST(PARALLEL_DEVICE_LIB, TestCancelOnError) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
 
   std::vector<std::string> devices{
@@ -231,7 +231,7 @@ TEST(PARALLEL_DEVICE_LIB, TestDifferentShapes) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
 
   std::vector<std::string> devices{
@@ -296,7 +296,7 @@ TEST(PARALLEL_DEVICE_LIB, TestScalarsFromSequence) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   std::vector<std::string> devices{

@@ -30,7 +30,7 @@ PYBIND11_MODULE(pywrap_tensor_test_util, m) {
     // using TFE_TensorHandleToNumpy.
     TFE_ContextOptions* opts = TFE_NewContextOptions();
     TF_StatusPtr status(TF_NewStatus());
-    TFE_Context* ctx = TFE_NewContext(opts, status.get());
+    TFE_Context* ctx = TFE_NewContext(opts, status.get(), true);
     TFE_TensorHandle* handle = TestScalarTensorHandle(ctx, 1.0f);
     auto result = Pyo(TFE_TensorHandleToNumpy(handle, status.get()));
     TFE_DeleteTensorHandle(handle);

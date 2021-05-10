@@ -140,7 +140,7 @@ LogicalResult ConstantFoldFallbackHook(
 #if TENSORFLOW_USE_ROCM
     auto ctx = TFE_NewContext(opts, status, false);
 #else
-    auto ctx = TFE_NewContext(opts, status);
+    auto ctx = TFE_NewContext(opts, status, true);
 #endif
     TFE_DeleteContextOptions(opts);
     TF_DeleteStatus(status);

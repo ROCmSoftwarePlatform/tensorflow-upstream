@@ -145,7 +145,7 @@ void TestFunctionWithPackedInput(const bool remote) {
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(/*enable=*/true));
   TFE_ContextOptionsSetDevicePlacementPolicy(opts, TFE_DEVICE_PLACEMENT_SILENT);
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   EXPECT_EQ(TF_GetCode(status), TF_OK) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -367,7 +367,7 @@ TEST(CAPI, DistributedFunctionGraphPassOnlyOnce) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetDevicePlacementPolicy(opts, TFE_DEVICE_PLACEMENT_SILENT);
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   EXPECT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -490,7 +490,7 @@ void TestDistributedFunctionCancellation(bool inject_error) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetDevicePlacementPolicy(opts, TFE_DEVICE_PLACEMENT_SILENT);
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   EXPECT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -570,7 +570,7 @@ void TestRemoteExecuteDeleteContextWithOutstandingRPC(bool async) {
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
   TFE_ContextOptionsSetDevicePlacementPolicy(opts,
                                              TFE_DEVICE_PLACEMENT_EXPLICIT);
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   EXPECT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 

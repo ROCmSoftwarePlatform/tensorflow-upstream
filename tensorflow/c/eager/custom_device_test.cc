@@ -30,7 +30,7 @@ TEST(CUSTOM_DEVICE, RegisterSimpleDevice) {
   std::unique_ptr<TF_Status, decltype(&TF_DeleteStatus)> status(
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* context = TFE_NewContext(opts, status.get());
+  TFE_Context* context = TFE_NewContext(opts, status.get(), true);
   TFE_DeleteContextOptions(opts);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
   bool arrived = false;
@@ -67,7 +67,7 @@ TEST(CUSTOM_DEVICE, ResetOperation) {
       TF_NewStatus(), TF_DeleteStatus);
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts, status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts, status.get(), true), TFE_DeleteContext);
   TFE_DeleteContextOptions(opts);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
   bool arrived = false;
@@ -100,7 +100,7 @@ TEST(CUSTOM_DEVICE, MakeVariable) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
   bool arrived = false;
   bool executed = false;
@@ -185,7 +185,7 @@ TEST(CUSTOM_DEVICE, AccessVariableOnCustomDevice) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
   bool arrived = false;
   bool executed = false;
@@ -261,7 +261,7 @@ TEST(CUSTOM_DEVICE, InputBasedPlacement) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
 
   const char* custom0 = "/job:localhost/replica:0/task:0/device:CUSTOM:0";
@@ -356,7 +356,7 @@ TEST(CUSTOM_DEVICE, InvalidRegistrationError) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_TRUE(TF_GetCode(status.get()) == TF_OK) << TF_Message(status.get());
   bool arrived = false;
   bool executed = false;

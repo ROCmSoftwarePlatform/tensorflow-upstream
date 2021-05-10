@@ -207,7 +207,7 @@ void NcclCommunicator::StartAbort(const Status& s) {
 
 #else
 namespace tensorflow {
-std::unique_ptr<NcclCommunicatorInterface> MaybeCreateNcclCommunicator() {
+std::unique_ptr<NcclCommunicatorInterface> MaybeCreateNcclCommunicator(bool enable) {
   return nullptr;
 }
 }  // namespace tensorflow

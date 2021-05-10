@@ -51,7 +51,7 @@ TEST(PARALLEL_DEVICE, TestBasicCPU) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
   BasicTestsForTwoDevices(context.get(),
                           "/job:localhost/replica:0/task:0/device:CPU:0",
@@ -64,7 +64,7 @@ TEST(PARALLEL_DEVICE, TestBasicCPUAliased) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
   BasicTestsForTwoDevices(context.get(),
                           "/job:localhost/replica:0/task:0/device:CPU:0",
@@ -77,7 +77,7 @@ TEST(PARALLEL_DEVICE, TestBasicTPUAliased) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   // Skip the test if no TPU is available.
@@ -115,7 +115,7 @@ TEST(PARALLEL_DEVICE, TestExplicitCopies) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   const char* device_name = "/job:localhost/replica:0/task:0/device:CUSTOM:0";
@@ -180,7 +180,7 @@ TEST(PARALLEL_DEVICE, TestDifferentShapes) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   const char* device_name = "/job:localhost/replica:0/task:0/device:CUSTOM:0";
@@ -224,7 +224,7 @@ TEST(PARALLEL_DEVICE, TestNestedParallelDevices) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   // Create a parallel device with two CPUs
@@ -312,7 +312,7 @@ TEST(PARALLEL_DEVICE, TestInvalidPacking) {
   std::unique_ptr<TFE_ContextOptions, decltype(&TFE_DeleteContextOptions)> opts(
       TFE_NewContextOptions(), TFE_DeleteContextOptions);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   const char* device_name = "/job:localhost/replica:0/task:0/device:CUSTOM:0";
   std::array<const char*, 1> underlying_devices{
       "/job:localhost/replica:0/task:0/device:CPU:0"};
@@ -428,7 +428,7 @@ void TestCollective(bool async) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   const char* device_name = "/job:localhost/replica:0/task:0/device:CUSTOM:0";
@@ -524,7 +524,7 @@ TEST(PARALLEL_DEVICE, TestFunction) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   const char* device_name = "/job:localhost/replica:0/task:0/device:CUSTOM:0";
@@ -589,7 +589,7 @@ TEST(PARALLEL_DEVICE, TestSummaryString) {
   TFE_ContextOptionsSetConfig(opts.get(), config->data, config->length,
                               status.get());
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   ASSERT_EQ(TF_GetCode(status.get()), TF_OK) << TF_Message(status.get());
 
   const char* device_name = "/job:localhost/replica:0/task:0/device:CUSTOM:0";

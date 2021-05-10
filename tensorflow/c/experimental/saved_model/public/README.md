@@ -9,7 +9,7 @@ value (error checking is omitted for simplicity):
 ```c
 TF_Status* status = TF_NewStatus();
 TFE_ContextOptions* ctx_options = TFE_NewContextOptions();
-TFE_Context* ctx = TFE_NewContext(ctx_options, status);
+TFE_Context* ctx = TFE_NewContext(ctx_options, status, true);
 
 TF_SavedModel* saved_model = TF_LoadSavedModel("/path/to/model", ctx, status);
 TF_ConcreteFunction* f = TF_GetSavedModelConcreteFunction(saved_model, "f", status);

@@ -83,7 +83,7 @@ func NewContext(options *ContextOptions) (*Context, error) {
 		return nil, err
 	}
 	defer C.TFE_DeleteContextOptions(cOpt)
-	cContext := C.TFE_NewContext(cOpt, status.c)
+	cContext := C.TFE_NewContext(cOpt, status.c, true)
 	if err := status.Err(); err != nil {
 		return nil, err
 	}

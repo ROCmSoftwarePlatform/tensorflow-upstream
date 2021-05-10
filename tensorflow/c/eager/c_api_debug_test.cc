@@ -23,7 +23,7 @@ limitations under the License.
 TEST(CApiDebug, ScalarCPU) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -42,7 +42,7 @@ TEST(CApiDebug, ScalarCPU) {
 TEST(CApiDebug, 2DCPU) {
   TF_Status* status = TF_NewStatus();
   TFE_ContextOptions* opts = TFE_NewContextOptions();
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   CHECK_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 

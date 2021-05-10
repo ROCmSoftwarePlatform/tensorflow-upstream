@@ -631,7 +631,7 @@ PYBIND11_MODULE(_pywrap_tfe, m) {
       [](const TFE_ContextOptions* opts) {
         tensorflow::Safe_TF_StatusPtr status =
             tensorflow::make_safe(TF_NewStatus());
-        TFE_Context* context = TFE_NewContext(opts, status.get());
+        TFE_Context* context = TFE_NewContext(opts, status.get(), true);
         tensorflow::MaybeRaiseRegisteredFromTFStatus(status.get());
         return tensorflow::PyoOrThrow(tensorflow::OutputTFE_Context(context));
       },

@@ -94,7 +94,7 @@ void TestRemoteExecuteSilentCopies(bool async, bool remote, bool func,
   TFE_ContextOptions* opts = TFE_NewContextOptions();
   TFE_ContextOptionsSetAsync(opts, static_cast<unsigned char>(async));
   TFE_ContextOptionsSetDevicePlacementPolicy(opts, TFE_DEVICE_PLACEMENT_SILENT);
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   EXPECT_EQ(TF_GetCode(status), TF_OK) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 

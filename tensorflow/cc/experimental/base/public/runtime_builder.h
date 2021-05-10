@@ -70,7 +70,7 @@ inline RuntimeBuilder& RuntimeBuilder::SetUseTFRT(bool use_tfrt) {
 }
 
 inline std::unique_ptr<Runtime> RuntimeBuilder::Build(Status* status) {
-  TFE_Context* result = TFE_NewContext(options_.get(), status->GetTFStatus());
+  TFE_Context* result = TFE_NewContext(options_.get(), status->GetTFStatus(), true);
   if (!status->ok()) {
     return nullptr;
   }

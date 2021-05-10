@@ -68,7 +68,7 @@ TEST_P(CSavedModelAPITest, LoadsSavedModelWithTags) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -100,7 +100,7 @@ TEST_P(CSavedModelAPITest, LoadsSavedModel) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -198,7 +198,7 @@ TEST_P(CSavedModelAPITest, RunsSignatureDefFunction) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -302,7 +302,7 @@ TEST_P(CSavedModelAPITest, LoadsAssetSavedModel) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -357,7 +357,7 @@ TEST_P(CSavedModelAPITest, LoadsStaticHashtableSavedModel) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -493,7 +493,7 @@ TEST_P(CSavedModelAPITest, LoadSavedModelWithUninitializedVariable) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 
@@ -536,7 +536,7 @@ TEST_P(CSavedModelAPITest, LoadSavedModelWithWhileLoop) {
 
   TFE_ContextOptionsSetTfrt(opts, use_tfrt);
 
-  TFE_Context* ctx = TFE_NewContext(opts, status);
+  TFE_Context* ctx = TFE_NewContext(opts, status, true);
   ASSERT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
   TFE_DeleteContextOptions(opts);
 

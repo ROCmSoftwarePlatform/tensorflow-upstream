@@ -89,7 +89,7 @@ class ShapeInferenceTest : public ::testing::Test {
  protected:
   ShapeInferenceTest()
       : status_(TF_NewStatus()), tfe_context_options_(TFE_NewContextOptions()) {
-    tfe_context_ = TFE_NewContext(tfe_context_options_, status_);
+    tfe_context_ = TFE_NewContext(tfe_context_options_, status_, true);
     CHECK_EQ(TF_OK, TF_GetCode(status_)) << TF_Message(status_);
   }
 

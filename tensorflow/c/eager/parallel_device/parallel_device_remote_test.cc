@@ -50,7 +50,7 @@ TEST(PARALLEL_DEVICE, TestRemoteBasic) {
   std::unique_ptr<TF_Status, decltype(&TF_DeleteStatus)> status(
       TF_NewStatus(), TF_DeleteStatus);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   tensorflow::ServerDef server_def = GetServerDef("worker", 3);
 
   // This server def has the task index set to 0.
@@ -88,7 +88,7 @@ TEST(PARALLEL_DEVICE, TestAsyncCopyOff) {
   std::unique_ptr<TF_Status, decltype(&TF_DeleteStatus)> status(
       TF_NewStatus(), TF_DeleteStatus);
   std::unique_ptr<TFE_Context, decltype(&TFE_DeleteContext)> context(
-      TFE_NewContext(opts.get(), status.get()), TFE_DeleteContext);
+      TFE_NewContext(opts.get(), status.get(), true), TFE_DeleteContext);
   tensorflow::ServerDef server_def = GetServerDef("worker", 3);
 
   // This server def has the task index set to 0.

@@ -93,7 +93,7 @@ TEST(CAPI, MultiClientCollectiveOps) {
                                static_cast<unsigned char>(/*enable=*/true));
     TFE_ContextOptionsSetDevicePlacementPolicy(opts,
                                                TFE_DEVICE_PLACEMENT_SILENT);
-    TFE_Context* ctx = TFE_NewContext(opts, status);
+    TFE_Context* ctx = TFE_NewContext(opts, status, true);
     EXPECT_EQ(TF_OK, TF_GetCode(status)) << TF_Message(status);
     TFE_DeleteContextOptions(opts);
 
