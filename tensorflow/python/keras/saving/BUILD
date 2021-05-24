@@ -140,26 +140,6 @@ tf_py_test(
     ],
 )
 
-tf_py_test(
-    name = "saved_model_test",
-    size = "medium",
-    srcs = ["saved_model/saved_model_test.py"],
-    python_version = "PY3",
-    shard_count = 4,
-    tags = [
-        "no_windows",
-        "notsan",  #TODO(b/181771982): it is flaky
-    ],
-    deps = [
-        "//tensorflow/python:client_testlib",
-        "//tensorflow/python/compat:v2_compat",
-        "//tensorflow/python/distribute:mirrored_strategy",
-        "//tensorflow/python/keras",
-        "//tensorflow/python/keras:combinations",
-        "//third_party/py/numpy",
-        "@absl_py//absl/testing:parameterized",
-    ],
-)
 
 tf_py_test(
     name = "saving_utils_test",
