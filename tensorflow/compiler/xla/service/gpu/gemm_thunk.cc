@@ -123,45 +123,6 @@ static Status DoGemmWithAlgorithm(
   CHECK(output_matrix.transpose == se::blas::Transpose::kNoTranspose);
   PrimitiveType output_type = primitive_util::NativeToPrimitiveType<Output>();
   se::blas::ComputationType computation_type =
-      *ComputationTypeFromPrimitive(type);
-  se::blas::Transpose lhs_transpose = lhs_matrix.transpose
-                                          ? se::blas::Transpose::kTranspose
-                                          : se::blas::Transpose::kNoTranspose;
-  se::blas::Transpose rhs_transpose = rhs_matrix.transpose
-                                          ? se::blas::Transpose::kTranspose
-                                          : se::blas::Transpose::kNoTranspose;
-  int64 k = lhs_matrix.transpose ? lhs_matrix.num_rows : lhs_matrix.num_cols;
-
-  se::DeviceMemory<Element> lhs_data(lhs_matrix.data);
-  se::DeviceMemory<Element> rhs_data(rhs_matrix.data);
-  se::DeviceMemory<Element> output_data(output_matrix.data);
-
-  // Ignore the "algorithm" field on the ROCm platform. This is because
-  // autotuning for GEMM is not yet available on the ROCm platform
-  // The "algorithm" field does not get populated in the "normal" flow
-  // on the ROCm platform, but atleast one unittest directly populates it
-  // and hence the need for this check
-  bool is_rocm_platform =
-      se::MultiPlatformManager::PlatformWithName("ROCM").ok();
-
-  if (algorithm && !is_rocm_platform) {
-    // Autotuning is disabled for batch_size != 1.
-    CHECK_EQ(1, batch_size);
-    return stream->ThenBlasGemmWithAlgorithm(
-        lhs_transpose, rhs_transpose, output_matrix.num_rows,
-        output_matrix.num_cols,
-        /*size of reduce dim=*/k,
-        /*alpha=*/alpha, lhs_data,
-        /*leading dim of LHS=*/lhs_matrix.num_rows, rhs_data,
-        /*leading dim of RHS=*/rhs_matrix.num_rows,
-        /*beta=*/beta, &output_data,
-        /*leading dim of output=*/output_matrix.num_rows, computation_type,
-        *algorithm, output_profile_result);
-  }
-
-  int64 lhs_stride = lhs_matrix.num_rows * lhs_matrix.num_cols;
-  int64 rhs_stride = rhs_matrix.num_rows * rhs_matrix.num_cols;
-  int64 output_stride = output_matrix.num_rows * output_matrix.num_cols;
       *ComputationTypeFromPrimitive(output_type);
   se::DeviceMemory<Output> output_data(output_matrix.data);
 
