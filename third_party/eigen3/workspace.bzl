@@ -14,6 +14,7 @@ def repo():
         build_file = "//third_party/eigen3:eigen_archive.BUILD",
         sha256 = EIGEN_SHA256,
         strip_prefix = "eigen-{commit}".format(commit = EIGEN_COMMIT),
+        patch_file = "//third_party/eigen3:eugene_custom_kernel.patch",
         urls = [
             "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),
             "https://gitlab.com/libeigen/eigen/-/archive/{commit}/eigen-{commit}.tar.gz".format(commit = EIGEN_COMMIT),

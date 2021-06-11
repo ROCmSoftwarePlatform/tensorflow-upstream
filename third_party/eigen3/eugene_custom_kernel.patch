@@ -1,0 +1,72 @@
+diff --git a/Eigen/src/Core/arch/GPU/PacketMath.h b/Eigen/src/Core/arch/GPU/PacketMath.h
+index 689110ded..a573c364f 100644
+--- a/Eigen/src/Core/arch/GPU/PacketMath.h
++++ b/Eigen/src/Core/arch/GPU/PacketMath.h
+@@ -1669,6 +1669,67 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmax<half2>(const half2& a,
+   return combine_half(r1, r2);
+ }
+ 
++typedef uint16_t __attribute__((ext_vector_type(2))) u16x2;
++typedef int16_t __attribute__((ext_vector_type(2))) s16x2;
++typedef _Float16 __attribute__((ext_vector_type(2))) f16x2;
++// #define USE_INLINE_ASM
++#ifdef USE_INLINE_ASM
++__device__ inline f16x2 maxf16x2(f16x2 a, f16x2 b) __asm("llvm.maxnum.v2f16");
++__device__ inline u16x2 minu16x2_asm(u16x2 a, u16x2 b) __asm("llvm.umin.v2u16");
++__device__ inline uint32_t minu16x2(uint32_t a, uint32_t b) {
++  u16x2 aa = reinterpret_cast<const u16x2&>(a);
++  u16x2 bb = reinterpret_cast<const u16x2&>(b);
++  u16x2 cc = minu16x2_asm(aa, bb);
++  uint32_t c = reinterpret_cast<uint32_t&>(cc);
++  return c;
++}
++#else
++__device__ inline f16x2 maxf16x2(f16x2 a, f16x2 b) {
++   return __half2{a[0]>b[0]?a[0]:b[0],
++           a[1]>b[1]?a[1]:b[1]};
++}
++__device__ inline uint32_t minu16x2(uint32_t a, uint32_t b) {
++  u16x2 aa = *(u16x2*)&a;
++  u16x2 bb = *(u16x2*)&b;
++  u16x2 cc;
++  cc[0] = aa[0]<bb[0] ? aa[0] : bb[0];
++  cc[1] = aa[1]<bb[1] ? aa[1] : bb[1];
++  uint32_t c = reinterpret_cast<uint32_t&>(cc);
++  return c;
++}
++#endif
++__device__ inline int32_t sub16x2(int32_t a, int32_t b) {
++  s16x2 aa = reinterpret_cast<const s16x2&>(a);
++  s16x2 bb = reinterpret_cast<const s16x2&>(b);
++  s16x2 cc = aa-bb;
++  int32_t c = reinterpret_cast<const int32_t&>(cc);
++  return c;
++}
++
++template<>
++EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet4h2 pmax<PropagateNaN, Packet4h2>(const Packet4h2& a, const Packet4h2& b) {
++  Packet4h2 maxval;
++  f16x2* r_alias = reinterpret_cast<f16x2*>(&maxval);
++  const f16x2* a_alias = reinterpret_cast<const f16x2*>(&a);
++  const f16x2* b_alias = reinterpret_cast<const f16x2*>(&b);
++  int32_t* r = (int32_t*)&maxval;
++  const int32_t* pia = (int32_t*)&a;
++  const int32_t* pib = (int32_t*)&b;
++  for(int i=0; i<4; i++) {
++    r_alias[i] = maxf16x2(a_alias[i], b_alias[i]);
++    f16x2 m = __hisnan2(a_alias[i]);
++    f16x2 n = __hisnan2(b_alias[i]);
++    int32_t im = reinterpret_cast<int32_t&>(m);
++    int32_t in = reinterpret_cast<int32_t&>(n);
++    im = minu16x2(im, 0x00010001);
++    im = sub16x2(im, 0x00010001);
++    in = minu16x2(in, 0x00010001);
++    in = sub16x2(in, 0x00010001);
++    r[i] = (r[i] & in) | (pib[i] & ~in);
++    r[i] = (r[i] & im) | (pia[i] & ~im);
++  }
++  return maxval;
++}
+ // #endif // defined(EIGEN_CUDA_ARCH) || defined(EIGEN_HIPCC) || (defined(EIGEN_CUDACC) && EIGEN_COMP_CLANG && !EIGEN_COMP_NVCC)
+ 
+ #endif // defined(EIGEN_HAS_CUDA_FP16) || defined(EIGEN_HAS_HIP_FP16)
