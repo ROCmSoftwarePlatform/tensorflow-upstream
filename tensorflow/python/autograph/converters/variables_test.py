@@ -35,7 +35,7 @@ class VariablesTest(converter_testing.TestCase):
       return l
 
     tr = self.transform_with_test_ld(f)
-
+    # pylint: disable=not-callable
     self.assertEqual(tr(1), 2)
 
   def test_aug_assign(self):
@@ -45,7 +45,7 @@ class VariablesTest(converter_testing.TestCase):
       return l
 
     tr = self.transform_with_test_ld(f)
-
+    # pylint: disable=not-callable
     self.assertEqual(tr(1), (1 + 1) * 10 + 1)  # two reads
 
   def test_del(self):
@@ -162,7 +162,7 @@ class VariablesTest(converter_testing.TestCase):
 
     tc = TestClass()
     tr = self.transform_with_test_ld(f)
-
+    # pylint: disable=not-callable
     self.assertEqual(tr(tc), 2)
 
   def test_subscript(self):
@@ -184,7 +184,7 @@ class VariablesTest(converter_testing.TestCase):
 
     tc = TestClass()
     tr = self.transform_with_test_ld(f)
-
+    # pylint: disable=not-callable
     self.assertEqual(tr(tc), 2)
 
   def test_call(self):
@@ -206,7 +206,7 @@ class VariablesTest(converter_testing.TestCase):
 
     tc = TestClass()
     tr = self.transform_with_test_ld(f)
-
+    # pylint: disable=not-callable
     self.assertEqual(tr(tc), 2)
 
 
