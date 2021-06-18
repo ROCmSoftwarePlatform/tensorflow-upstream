@@ -134,9 +134,7 @@ class GRUV2Test(keras_parameterized.TestCase):
     model = keras.models.Sequential()
     model.add(rnn.GRU(10, return_sequences=True, unroll=False))
     model.add(rnn.GRU(5, return_sequences=True, unroll=False))
-    model.compile(
-        loss='categorical_crossentropy',
-        optimizer=gradient_descent.GradientDescentOptimizer(0.01))
+    model.compile(loss='categorical_crossentropy',optimizer=gradient_descent.GradientDescentOptimizer(0.01))
     model.fit(inputs, targets, epochs=1, batch_size=2, verbose=1)
 
   def test_from_config_GRU(self):
