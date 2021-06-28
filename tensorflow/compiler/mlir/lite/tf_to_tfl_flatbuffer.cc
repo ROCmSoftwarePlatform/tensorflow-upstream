@@ -33,7 +33,6 @@ limitations under the License.
 #include "tensorflow/compiler/mlir/lite/quantization/quantization_config.h"
 #include "tensorflow/compiler/mlir/lite/transforms/passes.h"
 #include "tensorflow/compiler/mlir/tensorflow/ir/tf_executor.h"
-#include "tensorflow/compiler/mlir/tensorflow/transforms/decode_constant.h"
 #include "tensorflow/compiler/mlir/tensorflow/transforms/passes.h"
 #include "tensorflow/compiler/mlir/tensorflow/translate/tf_mlir_translate.h"
 #include "tensorflow/compiler/mlir/tensorflow/utils/error_util.h"
@@ -248,7 +247,7 @@ StatusOr<mlir::OwningModuleRef> ImportSavedModel(
     const std::unordered_set<std::string>& tags,
     absl::Span<const std::string> extra_tf_opdefs,
     absl::Span<std::string> exported_names, const GraphImportConfig& specs,
-    mlir::MLIRContext* context,
+    bool enable_variable_lifting, mlir::MLIRContext* context,
     std::unique_ptr<tensorflow::SavedModelBundle>* saved_model_bundle) {
   // Register extra TF ops passed as OpDef.
   auto extra_opdefs_status = RegisterExtraTfOpDefs(extra_tf_opdefs);
@@ -263,7 +262,8 @@ StatusOr<mlir::OwningModuleRef> ImportSavedModel(
     MLIRImportOptions options;
     options.upgrade_legacy = specs.upgrade_legacy;
     auto module_or = tensorflow::SavedModelSignatureDefsToMlirImport(
-        input_filename, tags, exported_names, context, options);
+        input_filename, tags, exported_names, context, options,
+        enable_variable_lifting, saved_model_bundle);
 
     if (!module_or.status().ok()) return module_or.status();
     return module_or.ConsumeValueOrDie();
