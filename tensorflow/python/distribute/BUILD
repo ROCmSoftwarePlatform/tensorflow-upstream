@@ -1138,11 +1138,7 @@ cuda_py_test(
     tags = [
         "multi_and_single_gpu",
         "no_cuda_asan",  # times out
-<<<<<<< HEAD
-        "notsan",  # b/173031470
         "no_rocm" # flaky/timeout with 4.1
-=======
->>>>>>> upstream/master
     ],
     deps = [
         ":collective_util",
